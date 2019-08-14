@@ -24,11 +24,13 @@ message(STATUS "ZLIB_LIBRARIES: ${ZLIB_LIBRARIES}")
 set(IPTV_SOURCES src/client.cpp
                  src/PVRIptvData.cpp
                  src/iptvsimple/Settings.cpp
+                 src/iptvsimple/utilities/FileUtils.cpp
                  src/iptvsimple/utilities/Logger.cpp)
 
 set(IPTV_HEADERS src/client.h
                  src/PVRIptvData.h
                  src/iptvsimple/Settings.h
+                 src/iptvsimple/utilities/FileUtils.h
                  src/iptvsimple/utilities/Logger.h)
 
 addon_version(pvr.iptvsimple IPTV)

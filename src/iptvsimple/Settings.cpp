@@ -1,6 +1,7 @@
 #include "Settings.h"
 
 #include "../client.h"
+#include "utilities/FileUtils.h"
 #include "p8-platform/util/StringUtils.h"
 
 using namespace ADDON;
@@ -78,13 +79,13 @@ ADDON_STATUS Settings::SetValue(const std::string& settingName, const void* sett
 {
   // reset cache and restart addon
 
-  std::string strFile = GetUserFilePath(M3U_FILE_NAME);
+  std::string strFile = FileUtils::GetUserFilePath(M3U_FILE_NAME);
   if (XBMC->FileExists(strFile.c_str(), false))
   {
     XBMC->DeleteFile(strFile.c_str());
   }
 
-  strFile = GetUserFilePath(TVG_FILE_NAME);
+  strFile = FileUtils::GetUserFilePath(TVG_FILE_NAME);
   if (XBMC->FileExists(strFile.c_str(), false))
   {
     XBMC->DeleteFile(strFile.c_str());

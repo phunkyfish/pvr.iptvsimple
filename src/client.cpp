@@ -57,33 +57,6 @@ Settings& settings = Settings::GetInstance();
 CHelper_libXBMC_addon* XBMC = nullptr;
 CHelper_libXBMC_pvr* PVR = nullptr;
 
-extern std::string PathCombine(const std::string& strPath, const std::string& strFileName)
-{
-  std::string strResult = strPath;
-  if (strResult.at(strResult.size() - 1) == '\\' ||
-      strResult.at(strResult.size() - 1) == '/')
-  {
-    strResult.append(strFileName);
-  }
-  else
-  {
-    strResult.append("/");
-    strResult.append(strFileName);
-  }
-
-  return strResult;
-}
-
-extern std::string GetClientFilePath(const std::string& strFileName)
-{
-  return PathCombine(settings.GetClientPath(), strFileName);
-}
-
-extern std::string GetUserFilePath(const std::string& strFileName)
-{
-  return PathCombine(settings.GetUserPath(), strFileName);
-}
-
 extern "C"
 {
 ADDON_STATUS ADDON_Create(void* hdl, void* props)

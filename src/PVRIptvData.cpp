@@ -25,6 +25,7 @@
 #include "PVRIptvData.h"
 
 #include "client.h"
+#include "iptvsimple/utilities/FileUtils.h"
 #include "iptvsimple/utilities/Logger.h"
 #include "p8-platform/util/StringUtils.h"
 #include "rapidxml/rapidxml.hpp"
@@ -614,16 +615,16 @@ bool PVRIptvData::LoadGenres(void)
   std::string data;
 
   // try to load genres from userdata folder
-  std::string strFilePath = GetUserFilePath(GENRES_MAP_FILENAME);
+  std::string strFilePath = FileUtils::GetUserFilePath(GENRES_MAP_FILENAME);
   if (!XBMC->FileExists(strFilePath.c_str(), false))
   {
     // try to load file from addom folder
-    strFilePath = GetClientFilePath(GENRES_MAP_FILENAME);
+    strFilePath = FileUtils::GetClientFilePath(GENRES_MAP_FILENAME);
     if (!XBMC->FileExists(strFilePath.c_str(), false))
       return false;
   }
 
-  GetFileContents(strFilePath, data);
+  FileUtils::GetFileContents(strFilePath, data);
 
   if (data.empty())
     return false;
@@ -859,21 +860,6 @@ PVR_ERROR PVRIptvData::GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid, ti
   return PVR_ERROR_NO_ERROR;
 }
 
-int PVRIptvData::GetFileContents(const std::string& url, std::string& strContent)
-{
-  strContent.clear();
-  void* fileHandle = XBMC->OpenFile(url.c_str(), 0);
-  if (fileHandle)
-  {
-    char buffer[1024];
-    while (int bytesRead = XBMC->ReadFile(fileHandle, buffer, 1024))
-      strContent.append(buffer, bytesRead);
-    XBMC->CloseFile(fileHandle);
-  }
-
-  return strContent.length();
-}
-
 const PVRIptvChannel* PVRIptvData::FindChannel(const std::string& strId, const std::string& strName) const
 {
   const std::string strTvgName = std::regex_replace(strName, std::regex(" "), "_");
@@ -1034,7 +1020,7 @@ int PVRIptvData::GetCachedFileContents(const std::string& strCachedName, const s
                                        std::string& strContents, const bool bUseCache /* false */)
 {
   bool bNeedReload = false;
-  const std::string strCachedPath = GetUserFilePath(strCachedName);
+  const std::string strCachedPath = FileUtils::GetUserFilePath(strCachedName);
   const std::string strFilePath = filePath;
 
   // check cached file is exists
@@ -1053,7 +1039,7 @@ int PVRIptvData::GetCachedFileContents(const std::string& strCachedName, const s
 
   if (bNeedReload)
   {
-    GetFileContents(strFilePath, strContents);
+    FileUtils::GetFileContents(strFilePath, strContents);
 
     // write to cache
     if (bUseCache && strContents.length() > 0)
@@ -1068,7 +1054,7 @@ int PVRIptvData::GetCachedFileContents(const std::string& strCachedName, const s
     return strContents.length();
   }
 
-  return GetFileContents(strCachedPath, strContents);
+  return FileUtils::GetFileContents(strCachedPath, strContents);
 }
 
 void PVRIptvData::ApplyChannelsLogos()
@@ -1080,7 +1066,7 @@ void PVRIptvData::ApplyChannelsLogos()
       if (!m_strLogoPath.empty()
         // special proto
         && channel.strTvgLogo.find("://") == std::string::npos)
-        channel.strLogoPath = PathCombine(m_strLogoPath, channel.strTvgLogo);
+        channel.strLogoPath = FileUtils::PathCombine(m_strLogoPath, channel.strTvgLogo);
       else
         channel.strLogoPath = channel.strTvgLogo;
     }
