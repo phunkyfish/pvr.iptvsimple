@@ -25,6 +25,7 @@
 #include "PVRIptvData.h"
 
 #include "client.h"
+#include "iptvsimple/utilities/Logger.h"
 #include "p8-platform/util/StringUtils.h"
 #include "rapidxml/rapidxml.hpp"
 #include "zlib.h"
@@ -54,6 +55,8 @@
 #define GENRES_MAP_FILENAME     "genres.xml"
 
 using namespace ADDON;
+using namespace iptvsimple;
+using namespace iptvsimple::utilities;
 using namespace rapidxml;
 
 template<class Ch>
@@ -166,7 +169,7 @@ bool PVRIptvData::LoadEPG(time_t iStart, time_t iEnd)
 {
   if (m_strXMLTVUrl.empty())
   {
-    XBMC->Log(LOG_NOTICE, "EPG file path is not configured. EPG not loaded.");
+    Logger::Log(LEVEL_NOTICE, "EPG file path is not configured. EPG not loaded.");
     return false;
   }
 
@@ -181,7 +184,7 @@ bool PVRIptvData::LoadEPG(time_t iStart, time_t iEnd)
     {
       break;
     }
-    XBMC->Log(LOG_ERROR, "Unable to load EPG file '%s':  file is missing or empty. :%dth try.", m_strXMLTVUrl.c_str(), ++iCount);
+    Logger::Log(LEVEL_ERROR, "Unable to load EPG file '%s':  file is missing or empty. :%dth try.", m_strXMLTVUrl.c_str(), ++iCount);
     if (iCount < 3)
     {
       usleep(2 * 1000 * 1000); // sleep 2 sec before next try.
@@ -190,7 +193,7 @@ bool PVRIptvData::LoadEPG(time_t iStart, time_t iEnd)
 
   if (iReaded == 0)
   {
-    XBMC->Log(LOG_ERROR, "Unable to load EPG file '%s':  file is missing or empty. After %d tries.", m_strXMLTVUrl.c_str(), iCount);
+    Logger::Log(LEVEL_ERROR, "Unable to load EPG file '%s':  file is missing or empty. After %d tries.", m_strXMLTVUrl.c_str(), iCount);
     return false;
   }
 
@@ -201,7 +204,7 @@ bool PVRIptvData::LoadEPG(time_t iStart, time_t iEnd)
   {
     if (!GzipInflate(data, decompressed))
     {
-      XBMC->Log(LOG_ERROR, "Invalid EPG file '%s': unable to decompress file.", m_strXMLTVUrl.c_str());
+      Logger::Log(LEVEL_ERROR, "Invalid EPG file '%s': unable to decompress file.", m_strXMLTVUrl.c_str());
       return false;
     }
     buffer = &(decompressed[0]);
@@ -221,7 +224,7 @@ bool PVRIptvData::LoadEPG(time_t iStart, time_t iEnd)
         buffer += 0x200; // RECORDSIZE = 512
       else
       {
-        XBMC->Log(LOG_ERROR, "Invalid EPG file '%s': unable to parse file.", m_strXMLTVUrl.c_str());
+        Logger::Log(LEVEL_ERROR, "Invalid EPG file '%s': unable to parse file.", m_strXMLTVUrl.c_str());
         return false;
       }
     }
@@ -234,14 +237,14 @@ bool PVRIptvData::LoadEPG(time_t iStart, time_t iEnd)
   }
   catch (parse_error p)
   {
-    XBMC->Log(LOG_ERROR, "Unable parse EPG XML: %s", p.what());
+    Logger::Log(LEVEL_ERROR, "Unable parse EPG XML: %s", p.what());
     return false;
   }
 
   xml_node<>* pRootElement = xmlDoc.first_node("tv");
   if (!pRootElement)
   {
-    XBMC->Log(LOG_ERROR, "Invalid EPG XML: no <tv> tag found");
+    Logger::Log(LEVEL_ERROR, "Invalid EPG XML: no <tv> tag found");
     return false;
   }
 
@@ -276,7 +279,7 @@ bool PVRIptvData::LoadEPG(time_t iStart, time_t iEnd)
 
   if (m_epg.size() == 0)
   {
-    XBMC->Log(LOG_ERROR, "EPG channels not found.");
+    Logger::Log(LEVEL_ERROR, "EPG channels not found.");
     return false;
   }
 
@@ -352,7 +355,7 @@ bool PVRIptvData::LoadEPG(time_t iStart, time_t iEnd)
   xmlDoc.clear();
   LoadGenres();
 
-  XBMC->Log(LOG_NOTICE, "EPG Loaded.");
+  Logger::Log(LEVEL_NOTICE, "EPG Loaded.");
 
   if (g_iEPGLogos > 0)
     ApplyChannelsLogosFromEPG();
@@ -364,14 +367,14 @@ bool PVRIptvData::LoadPlayList(void)
 {
   if (m_strM3uUrl.empty())
   {
-    XBMC->Log(LOG_NOTICE, "Playlist file path is not configured. Channels not loaded.");
+    Logger::Log(LEVEL_NOTICE, "Playlist file path is not configured. Channels not loaded.");
     return false;
   }
 
   std::string strPlaylistContent;
   if (!GetCachedFileContents(M3U_FILE_NAME, m_strM3uUrl, strPlaylistContent, g_bCacheM3U))
   {
-    XBMC->Log(LOG_ERROR, "Unable to load playlist file '%s':  file is missing or empty.", m_strM3uUrl.c_str());
+    Logger::Log(LEVEL_ERROR, "Unable to load playlist file '%s':  file is missing or empty.", m_strM3uUrl.c_str());
     return false;
   }
 
@@ -399,7 +402,7 @@ bool PVRIptvData::LoadPlayList(void)
     strLine = StringUtils::TrimRight(strLine, " \t\r\n");
     strLine = StringUtils::TrimLeft(strLine, " \t");
 
-    XBMC->Log(LOG_DEBUG, "Read line: '%s'", strLine.c_str());
+    Logger::Log(LEVEL_DEBUG, "Read line: '%s'", strLine.c_str());
 
     if (strLine.empty())
     {
@@ -421,7 +424,7 @@ bool PVRIptvData::LoadPlayList(void)
       }
       else
       {
-        XBMC->Log(LOG_ERROR,
+        Logger::Log(LEVEL_ERROR,
                   "URL '%s' missing %s descriptor on line 1, attempting to "
                   "parse it anyway.",
                   m_strM3uUrl.c_str(), M3U_START_MARKER);
@@ -542,7 +545,7 @@ bool PVRIptvData::LoadPlayList(void)
         const std::string propValue = value.substr(pos + 1);
         tmpChannel.properties.insert({prop, propValue});
 
-        XBMC->Log(LOG_DEBUG, "Found #EXTVLCOPT property: '%s' value: '%s'", prop.c_str(), propValue.c_str());
+        Logger::Log(LEVEL_DEBUG, "Found #EXTVLCOPT property: '%s' value: '%s'", prop.c_str(), propValue.c_str());
       }
     }
     else if (StringUtils::Left(strLine, strlen(PLAYLIST_TYPE_MARKER)) == PLAYLIST_TYPE_MARKER)
@@ -552,7 +555,7 @@ bool PVRIptvData::LoadPlayList(void)
     }
     else if (strLine[0] != '#')
     {
-      XBMC->Log(LOG_DEBUG, "Found URL: '%s' (current channel name: '%s')", strLine.c_str(), tmpChannel.strChannelName.c_str());
+      Logger::Log(LEVEL_DEBUG, "Found URL: '%s' (current channel name: '%s')", strLine.c_str(), tmpChannel.strChannelName.c_str());
 
       if (bIsRealTime)
         tmpChannel.properties.insert({PVR_STREAM_PROPERTY_ISREALTIMESTREAM, "true"});
@@ -596,13 +599,13 @@ bool PVRIptvData::LoadPlayList(void)
 
   if (m_channels.size() == 0)
   {
-    XBMC->Log(LOG_ERROR, "Unable to load channels from file '%s':  file is corrupted.", m_strM3uUrl.c_str());
+    Logger::Log(LEVEL_ERROR, "Unable to load channels from file '%s':  file is corrupted.", m_strM3uUrl.c_str());
     return false;
   }
 
   ApplyChannelsLogos();
 
-  XBMC->Log(LOG_NOTICE, "Loaded %d channels.", m_channels.size());
+  Logger::Log(LEVEL_NOTICE, "Loaded %d channels.", m_channels.size());
   return true;
 }
 
