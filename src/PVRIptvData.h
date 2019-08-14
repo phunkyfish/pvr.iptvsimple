@@ -23,6 +23,7 @@
  *
  */
 
+#include "iptvsimple/Settings.h"
 #include "p8-platform/os.h"
 #include "libXBMC_pvr.h"
 #include "p8-platform/threads/threads.h"
@@ -127,6 +128,9 @@ protected:
   void* Process(void) override;
 
 private:
+
+  iptvsimple::Settings& m_settings = iptvsimple::Settings::GetInstance();
+
   bool m_bTSOverride;
   int m_iEPGTimeShift;
   int m_iLastStart;

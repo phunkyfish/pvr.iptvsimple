@@ -136,11 +136,11 @@ long long ParseDateTime(const std::string& strDate)
 
 PVRIptvData::PVRIptvData(void)
 {
-  m_strXMLTVUrl   = g_strTvgPath;
-  m_strM3uUrl     = g_strM3UPath;
-  m_strLogoPath   = g_strLogoPath;
-  m_iEPGTimeShift = g_iEPGTimeShift;
-  m_bTSOverride   = g_bTSOverride;
+  m_strXMLTVUrl   = m_settings.GetTvgPath();
+  m_strM3uUrl     = m_settings.GetM3UPath();
+  m_strLogoPath   = m_settings.GetLogoPath();
+  m_iEPGTimeShift = m_settings.GetEpgTimeshift();
+  m_bTSOverride   = m_settings.GetTsOverride();
   m_iLastStart    = 0;
   m_iLastEnd      = 0;
 
@@ -180,7 +180,7 @@ bool PVRIptvData::LoadEPG(time_t iStart, time_t iEnd)
   int iCount = 0;
   while (iCount < 3) // max 3 tries
   {
-    if ((iReaded = GetCachedFileContents(TVG_FILE_NAME, m_strXMLTVUrl, data, g_bCacheEPG)) != 0)
+    if ((iReaded = GetCachedFileContents(TVG_FILE_NAME, m_strXMLTVUrl, data, m_settings.UseEPGCache())) != 0)
     {
       break;
     }
@@ -357,7 +357,7 @@ bool PVRIptvData::LoadEPG(time_t iStart, time_t iEnd)
 
   Logger::Log(LEVEL_NOTICE, "EPG Loaded.");
 
-  if (g_iEPGLogos > 0)
+  if (m_settings.GetEpgLogos() > 0)
     ApplyChannelsLogosFromEPG();
 
   return true;
@@ -372,7 +372,7 @@ bool PVRIptvData::LoadPlayList(void)
   }
 
   std::string strPlaylistContent;
-  if (!GetCachedFileContents(M3U_FILE_NAME, m_strM3uUrl, strPlaylistContent, g_bCacheM3U))
+  if (!GetCachedFileContents(M3U_FILE_NAME, m_strM3uUrl, strPlaylistContent, m_settings.UseM3UCache()))
   {
     Logger::Log(LEVEL_ERROR, "Unable to load playlist file '%s':  file is missing or empty.", m_strM3uUrl.c_str());
     return false;
@@ -385,7 +385,7 @@ bool PVRIptvData::LoadPlayList(void)
   bool bIsRealTime   = true;
   int iChannelIndex  = 0;
   int iUniqueGroupId = 0;
-  int iChannelNum    = g_iStartNumber;
+  int iChannelNum    = m_settings.GetStartNumber();
   int iEPGTimeShift  = 0;
   std::vector<int> iCurrentGroupId;
 
@@ -1098,11 +1098,11 @@ void PVRIptvData::ApplyChannelsLogosFromEPG()
       continue;
 
     // 1 - prefer logo from playlist
-    if (!channel.strLogoPath.empty() && g_iEPGLogos == 1)
+    if (!channel.strLogoPath.empty() && m_settings.GetEpgLogos() == 1)
       continue;
 
     // 2 - prefer logo from epg
-    if (!epg->strIcon.empty() && g_iEPGLogos == 2)
+    if (!epg->strIcon.empty() && m_settings.GetEpgLogos() == 2)
     {
       channel.strLogoPath = epg->strIcon;
       bUpdated = true;
