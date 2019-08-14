@@ -25,10 +25,13 @@
 #include "client.h"
 
 #include "PVRIptvData.h"
+#include "iptvsimple/utilities/Logger.h"
 #include "p8-platform/util/util.h"
 #include "xbmc_pvr_dll.h"
 
 using namespace ADDON;
+using namespace iptvsimple;
+using namespace iptvsimple::utilities;
 
 #ifdef TARGET_WINDOWS
 #define snprintf _snprintf
@@ -195,7 +198,33 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
     return ADDON_STATUS_PERMANENT_FAILURE;
   }
 
-  XBMC->Log(LOG_DEBUG, "%s - Creating the PVR IPTV Simple add-on", __FUNCTION__);
+  /* Configure the logger */
+  Logger::GetInstance().SetImplementation([](LogLevel level, const char* message)
+  {
+    /* Convert the log level */
+    addon_log_t addonLevel;
+
+    switch (level)
+    {
+      case LogLevel::LEVEL_ERROR:
+        addonLevel = addon_log_t::LOG_ERROR;
+        break;
+      case LogLevel::LEVEL_INFO:
+        addonLevel = addon_log_t::LOG_INFO;
+        break;
+      case LogLevel::LEVEL_NOTICE:
+        addonLevel = addon_log_t::LOG_NOTICE;
+        break;
+      default:
+        addonLevel = addon_log_t::LOG_DEBUG;
+    }
+
+    XBMC->Log(addonLevel, "%s", message);
+  });
+
+  Logger::GetInstance().SetPrefix("pvr.iptvsimple");
+
+  Logger::Log(LogLevel::LEVEL_INFO, "%s Creating the PVR IPTV Simple add-on", __FUNCTION__);
 
   m_CurStatus = ADDON_STATUS_UNKNOWN;
   g_strUserPath = pvrprops->strUserPath;
