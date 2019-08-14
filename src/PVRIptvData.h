@@ -106,7 +106,6 @@ protected:
   bool LoadPlayList(void);
   bool LoadEPG(time_t iStart, time_t iEnd);
   bool LoadGenres(void);
-  int GetFileContents(const std::string& url, std::string& strContent);
   const PVRIptvChannel* FindChannel(const std::string& strId, const std::string& strName) const;
   const PVRIptvChannelGroup* FindGroup(const std::string& strName) const;
   PVRIptvEpgChannel* FindEpg(const std::string& strId);

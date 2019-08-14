@@ -1,10 +1,8 @@
 #pragma once
+
 /*
- *      Copyright (C) 2013-2015 Anton Fedchin
- *      http://github.com/afedchin/xbmc-addon-iptvsimple/
- *
- *      Copyright (C) 2011 Pulse-Eight
- *      http://www.pulse-eight.com/
+ *      Copyright (C) 2005-2015 Team Kodi
+ *      http://kodi.tv
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,15 +21,20 @@
  *
  */
 
-#include "libXBMC_addon.h"
-#include "libXBMC_pvr.h"
+#include <string>
+#include <vector>
 
-/*!
- * @brief PVR macros for string exchange
- */
-#define PVR_STRCPY(dest, source) do { strncpy(dest, source, sizeof(dest) - 1); dest[sizeof(dest) - 1] = '\0'; } while (0)
-#define PVR_STRCLR(dest) memset(dest, 0, sizeof(dest))
-
-extern bool m_bCreated;
-extern ADDON::CHelper_libXBMC_addon* XBMC;
-extern CHelper_libXBMC_pvr* PVR;
+namespace iptvsimple
+{
+  namespace utilities
+  {
+    class FileUtils
+    {
+    public:
+      static std::string PathCombine(const std::string& strPath, const std::string& strFileName);
+      static std::string GetClientFilePath(const std::string& strFileName);
+      static std::string GetUserFilePath(const std::string& strFileName);
+      static int GetFileContents(const std::string& url, std::string& strContent);
+    };
+  } // namespace utilities
+} // namespace iptvsimple
