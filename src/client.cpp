@@ -47,26 +47,15 @@ bool m_bCreated = false;
 ADDON_STATUS m_CurStatus = ADDON_STATUS_UNKNOWN;
 PVRIptvData* m_data = nullptr;
 PVRIptvChannel m_currentChannel;
+Settings& settings = Settings::GetInstance();
 
 /* User adjustable settings are saved here.
  * Default values are defined inside client.h
  * and exported to the other source files.
  */
-std::string g_strUserPath = "";
-std::string g_strClientPath = "";
 
 CHelper_libXBMC_addon* XBMC = nullptr;
 CHelper_libXBMC_pvr* PVR = nullptr;
-
-std::string g_strTvgPath = "";
-std::string g_strM3UPath = "";
-std::string g_strLogoPath = "";
-int g_iEPGTimeShift = 0;
-int g_iStartNumber = 1;
-bool g_bTSOverride = true;
-bool g_bCacheM3U = false;
-bool g_bCacheEPG = false;
-int g_iEPGLogos = 0;
 
 extern std::string PathCombine(const std::string& strPath, const std::string& strFileName)
 {
@@ -87,93 +76,16 @@ extern std::string PathCombine(const std::string& strPath, const std::string& st
 
 extern std::string GetClientFilePath(const std::string& strFileName)
 {
-  return PathCombine(g_strClientPath, strFileName);
+  return PathCombine(settings.GetClientPath(), strFileName);
 }
 
 extern std::string GetUserFilePath(const std::string& strFileName)
 {
-  return PathCombine(g_strUserPath, strFileName);
+  return PathCombine(settings.GetUserPath(), strFileName);
 }
 
 extern "C"
 {
-void ADDON_ReadSettings(void)
-{
-  char buffer[1024];
-  int iPathType = 0;
-  if (!XBMC->GetSetting("m3uPathType", &iPathType))
-  {
-    iPathType = 1;
-  }
-  if (iPathType)
-  {
-    if (XBMC->GetSetting("m3uUrl", &buffer))
-    {
-      g_strM3UPath = buffer;
-    }
-    if (!XBMC->GetSetting("m3uCache", &g_bCacheM3U))
-    {
-      g_bCacheM3U = true;
-    }
-  }
-  else
-  {
-    if (XBMC->GetSetting("m3uPath", &buffer))
-    {
-      g_strM3UPath = buffer;
-    }
-    g_bCacheM3U = false;
-  }
-  if (!XBMC->GetSetting("startNum", &g_iStartNumber))
-  {
-    g_iStartNumber = 1;
-  }
-  if (!XBMC->GetSetting("epgPathType", &iPathType))
-  {
-    iPathType = 1;
-  }
-  if (iPathType)
-  {
-    if (XBMC->GetSetting("epgUrl", &buffer))
-    {
-      g_strTvgPath = buffer;
-    }
-    if (!XBMC->GetSetting("epgCache", &g_bCacheEPG))
-    {
-      g_bCacheEPG = true;
-    }
-  }
-  else
-  {
-    if (XBMC->GetSetting("epgPath", &buffer))
-    {
-      g_strTvgPath = buffer;
-    }
-    g_bCacheEPG = false;
-  }
-  float fShift;
-  if (XBMC->GetSetting("epgTimeShift", &fShift))
-  {
-    g_iEPGTimeShift = (int)(fShift * 3600.0); // hours to seconds
-  }
-  if (!XBMC->GetSetting("epgTSOverride", &g_bTSOverride))
-  {
-    g_bTSOverride = true;
-  }
-  if (!XBMC->GetSetting("logoPathType", &iPathType))
-  {
-    iPathType = 1;
-  }
-  if (XBMC->GetSetting(iPathType ? "logoBaseUrl" : "logoPath", &buffer))
-  {
-    g_strLogoPath = buffer;
-  }
-
-  // Logos from EPG
-  if (!XBMC->GetSetting("logoFromEpg", &g_iEPGLogos))
-    g_iEPGLogos = 0;
-}
-
 ADDON_STATUS ADDON_Create(void* hdl, void* props)
 {
   if (!hdl || !props)
@@ -227,15 +139,15 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   Logger::Log(LogLevel::LEVEL_INFO, "%s Creating the PVR IPTV Simple add-on", __FUNCTION__);
 
   m_CurStatus = ADDON_STATUS_UNKNOWN;
-  g_strUserPath = pvrprops->strUserPath;
-  g_strClientPath = pvrprops->strClientPath;
+  const std::string userPath = pvrprops->strUserPath;
+  const std::string clientPath = pvrprops->strClientPath;
 
-  if (!XBMC->DirectoryExists(g_strUserPath.c_str()))
+  if (!XBMC->DirectoryExists(settings.GetUserPath().c_str()))
   {
-    XBMC->CreateDirectory(g_strUserPath.c_str());
+    XBMC->CreateDirectory(settings.GetUserPath().c_str());
   }
 
-  ADDON_ReadSettings();
+  settings.ReadFromAddon(userPath, clientPath);
 
   m_data = new PVRIptvData;
   m_CurStatus = ADDON_STATUS_OK;
@@ -258,21 +170,10 @@ void ADDON_Destroy()
 
 ADDON_STATUS ADDON_SetSetting(const char* settingName, const void* settingValue)
 {
-  // reset cache and restart addon
+  if (!XBMC || !m_data)
+    return ADDON_STATUS_OK;
 
-  std::string strFile = GetUserFilePath(M3U_FILE_NAME);
-  if (XBMC->FileExists(strFile.c_str(), false))
-  {
-    XBMC->DeleteFile(strFile.c_str());
-  }
-
-  strFile = GetUserFilePath(TVG_FILE_NAME);
-  if (XBMC->FileExists(strFile.c_str(), false))
-  {
-    XBMC->DeleteFile(strFile.c_str());
-  }
-
-  return ADDON_STATUS_NEED_RESTART;
+  return settings.SetValue(settingName, settingValue);
 }
 
 /***********************************************************
