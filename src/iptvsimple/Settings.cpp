@@ -57,9 +57,8 @@ void Settings::ReadFromAddon(const std::string& userPath, const std::string clie
     m_cacheEPG = false;
   }
 
-  float fShift;
-  if (XBMC->GetSetting("epgTimeShift", &fShift))
-    m_epgTimeShift = static_cast<int>(fShift * 3600.0); // hours to seconds
+  if (XBMC->GetSetting("epgTimeShift", &m_epgTimeShift))
+    m_epgTimeShift *= 60; // minutes to seconds
 
   if (!XBMC->GetSetting("epgTSOverride", &m_tsOverride))
     m_tsOverride = true;
