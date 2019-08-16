@@ -506,21 +506,21 @@ bool PVRIptvData::LoadPlayList(void)
           while (std::getline(streamGroups, strGroupName, ';'))
           {
             strGroupName = XBMC->UnknownToUTF8(strGroupName.c_str());
-            const PVRIptvChannelGroup* pGroup = FindGroup(strGroupName);
+            const ChannelGroup* pGroup = FindGroup(strGroupName);
 
             if (!pGroup)
             {
-              PVRIptvChannelGroup group;
-              group.strGroupName = strGroupName;
-              group.iGroupId = ++iUniqueGroupId;
-              group.bRadio = bRadio;
+              ChannelGroup group;
+              group.SetGroupName(strGroupName);
+              group.SetGroupId(++iUniqueGroupId);
+              group.SetRadio(bRadio);
 
               m_groups.push_back(group);
               iCurrentGroupId.push_back(iUniqueGroupId);
             }
             else
             {
-              iCurrentGroupId.push_back(pGroup->iGroupId);
+              iCurrentGroupId.push_back(pGroup->GetGroupId());
             }
           }
         }
@@ -579,8 +579,8 @@ bool PVRIptvData::LoadPlayList(void)
 
       for (int myGroupId : iCurrentGroupId)
       {
-        channel.SetRadio(m_groups.at(myGroupId - 1).bRadio);
-        m_groups.at(myGroupId - 1).members.push_back(iChannelIndex);
+        channel.SetRadio(m_groups.at(myGroupId - 1).IsRadio());
+        m_groups.at(myGroupId - 1).GetMemberChannels().push_back(iChannelIndex);
       }
 
       m_channels.push_back(channel);
@@ -731,14 +731,14 @@ PVR_ERROR PVRIptvData::GetChannelGroups(ADDON_HANDLE handle, bool bRadio)
   P8PLATFORM::CLockObject lock(m_mutex);
   for (const auto& group : m_groups)
   {
-    if (group.bRadio == bRadio)
+    if (group.IsRadio() == bRadio)
     {
       PVR_CHANNEL_GROUP xbmcGroup;
       memset(&xbmcGroup, 0, sizeof(PVR_CHANNEL_GROUP));
 
       xbmcGroup.iPosition = 0; /* not supported  */
       xbmcGroup.bIsRadio = bRadio; /* is radio group */
-      strncpy(xbmcGroup.strGroupName, group.strGroupName.c_str(), sizeof(xbmcGroup.strGroupName) - 1);
+      strncpy(xbmcGroup.strGroupName, group.GetGroupName().c_str(), sizeof(xbmcGroup.strGroupName) - 1);
 
       PVR->TransferChannelGroup(handle, &xbmcGroup);
     }
@@ -750,10 +750,10 @@ PVR_ERROR PVRIptvData::GetChannelGroups(ADDON_HANDLE handle, bool bRadio)
 PVR_ERROR PVRIptvData::GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP& group)
 {
   P8PLATFORM::CLockObject lock(m_mutex);
-  const PVRIptvChannelGroup* myGroup = FindGroup(group.strGroupName);
+  ChannelGroup* myGroup = FindGroup(group.strGroupName);
   if (myGroup)
   {
-    for (const auto& memberId : myGroup->members)
+    for (int memberId : myGroup->GetMemberChannels())
     {
       if ((memberId) < 0 || (memberId) >= static_cast<int>(m_channels.size()))
         continue;
@@ -876,11 +876,11 @@ const Channel* PVRIptvData::FindChannel(const std::string& strId, const std::str
   return nullptr;
 }
 
-const PVRIptvChannelGroup* PVRIptvData::FindGroup(const std::string& strName) const
+ChannelGroup* PVRIptvData::FindGroup(const std::string& strName)
 {
-  for (const auto& myGroup : m_groups)
+  for (auto& myGroup : m_groups)
   {
-    if (myGroup.strGroupName == strName)
+    if (myGroup.GetGroupName() == strName)
       return &myGroup;
   }
 

@@ -30,6 +30,7 @@
 #include "p8-platform/threads/threads.h"
 
 #include "iptvsimple/data/Channel.h"
+#include "iptvsimple/data/ChannelGroup.h"
 
 #include <map>
 #include <vector>
@@ -61,14 +62,6 @@ struct PVRIptvEpgChannel
   std::vector<PVRIptvEpgEntry> epg;
 };
 
-struct PVRIptvChannelGroup
-{
-  bool bRadio;
-  int iGroupId;
-  std::string strGroupName;
-  std::vector<int> members;
-};
-
 struct PVRIptvEpgGenre
 {
   int iGenreType;
@@ -98,7 +91,7 @@ protected:
   bool LoadEPG(time_t iStart, time_t iEnd);
   bool LoadGenres(void);
   const iptvsimple::data::Channel* FindChannel(const std::string& strId, const std::string& strName) const;
-  const PVRIptvChannelGroup* FindGroup(const std::string& strName) const;
+  iptvsimple::data::ChannelGroup* FindGroup(const std::string& strName);
   PVRIptvEpgChannel* FindEpg(const std::string& strId);
   const PVRIptvEpgChannel* FindEpgForChannel(const iptvsimple::data::Channel& channel) const;
   bool FindEpgGenre(const std::string& strGenre, int& iType, int& iSubType);
@@ -124,7 +117,7 @@ private:
   std::string m_strXMLTVUrl;
   std::string m_strM3uUrl;
   std::string m_strLogoPath;
-  std::vector<PVRIptvChannelGroup> m_groups;
+  std::vector<iptvsimple::data::ChannelGroup> m_groups;
   std::vector<iptvsimple::data::Channel> m_channels;
   std::vector<PVRIptvEpgChannel> m_epg;
   std::vector<PVRIptvEpgGenre> m_genres;
