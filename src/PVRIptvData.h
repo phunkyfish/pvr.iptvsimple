@@ -30,44 +30,13 @@
 #include "p8-platform/threads/threads.h"
 
 #include "iptvsimple/data/Channel.h"
+#include "iptvsimple/data/ChannelEpg.h"
 #include "iptvsimple/data/ChannelGroup.h"
+#include "iptvsimple/data/EpgEntry.h"
+#include "iptvsimple/data/EpgGenre.h"
 
 #include <map>
 #include <vector>
-
-struct PVRIptvEpgEntry
-{
-  int iBroadcastId;
-  int iChannelId;
-  int iGenreType;
-  int iGenreSubType;
-  time_t startTime;
-  time_t endTime;
-  std::string strTitle;
-  std::string strEpisodeName;
-  std::string strPlotOutline;
-  std::string strPlot;
-  std::string strIconPath;
-  std::string strGenreString;
-  std::string strCast;
-  std::string strDirector;
-  std::string strWriter;
-};
-
-struct PVRIptvEpgChannel
-{
-  std::string strId;
-  std::string strName;
-  std::string strIcon;
-  std::vector<PVRIptvEpgEntry> epg;
-};
-
-struct PVRIptvEpgGenre
-{
-  int iGenreType;
-  int iGenreSubType;
-  std::string strGenre;
-};
 
 class PVRIptvData : public P8PLATFORM::CThread
 {
@@ -92,9 +61,8 @@ protected:
   bool LoadGenres(void);
   const iptvsimple::data::Channel* FindChannel(const std::string& strId, const std::string& strName) const;
   iptvsimple::data::ChannelGroup* FindGroup(const std::string& strName);
-  PVRIptvEpgChannel* FindEpg(const std::string& strId);
-  const PVRIptvEpgChannel* FindEpgForChannel(const iptvsimple::data::Channel& channel) const;
-  bool FindEpgGenre(const std::string& strGenre, int& iType, int& iSubType);
+  iptvsimple::data::ChannelEpg* FindEpgForChannel(const std::string& strId);
+  iptvsimple::data::ChannelEpg* FindEpgForChannel(const iptvsimple::data::Channel& channel);
   bool GzipInflate(const std::string& compressedBytes, std::string& uncompressedBytes);
   int GetCachedFileContents(const std::string& strCachedName, const std::string& strFilePath,
                                     std::string& strContent, const bool bUseCache = false);
@@ -119,7 +87,7 @@ private:
   std::string m_strLogoPath;
   std::vector<iptvsimple::data::ChannelGroup> m_groups;
   std::vector<iptvsimple::data::Channel> m_channels;
-  std::vector<PVRIptvEpgChannel> m_epg;
-  std::vector<PVRIptvEpgGenre> m_genres;
+  std::vector<iptvsimple::data::ChannelEpg> m_epg;
+  std::vector<iptvsimple::data::EpgGenre> m_genres;
   P8PLATFORM::CMutex m_mutex;
 };

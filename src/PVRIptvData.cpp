@@ -62,15 +62,13 @@ using namespace iptvsimple::utilities;
 using namespace rapidxml;
 
 template<class Ch>
-inline bool GetNodeValue(const xml_node<Ch>* pRootNode, const char* strTag, std::string& strStringValue)
+inline std::string GetNodeValue(const xml_node<Ch>* pRootNode, const char* strTag)
 {
   xml_node<Ch>* pChildNode = pRootNode->first_node(strTag);
   if (!pChildNode)
-  {
-    return false;
-  }
-  strStringValue = pChildNode->value();
-  return true;
+    return "";
+
+  return pChildNode->value();
 }
 
 template<class Ch>
@@ -263,20 +261,23 @@ bool PVRIptvData::LoadEPG(time_t iStart, time_t iEnd)
     if (!GetAttributeValue(pChannelNode, "id", strId))
       continue;
 
-    GetNodeValue(pChannelNode, "display-name", strName);
+    strName = GetNodeValue(pChannelNode, "display-name");
     if (!FindChannel(strId, strName))
       continue;
 
-    PVRIptvEpgChannel epgChannel;
-    epgChannel.strId = strId;
-    epgChannel.strName = strName;
+    ChannelEpg channelEpg;
+    channelEpg.SetId(strId);
+    channelEpg.SetName(strName);
 
     // get icon if available
     xml_node<>* pIconNode = pChannelNode->first_node("icon");
-    if (!pIconNode || !GetAttributeValue(pIconNode, "src", epgChannel.strIcon))
-      epgChannel.strIcon = "";
+    std::string icon = channelEpg.GetIcon();
+    if (!pIconNode || !GetAttributeValue(pIconNode, "src", icon))
+      channelEpg.SetIcon("");
+    else
+      channelEpg.SetIcon(icon);
 
-    m_epg.push_back(epgChannel);
+    m_epg.push_back(channelEpg);
   }
 
   if (m_epg.size() == 0)
@@ -308,9 +309,9 @@ bool PVRIptvData::LoadEPG(time_t iStart, time_t iEnd)
     if (!GetAttributeValue(pChannelNode, "channel", strId))
       continue;
 
-    if (!epg || StringUtils::CompareNoCase(epg->strId, strId) != 0)
+    if (!channelEpg || StringUtils::CompareNoCase(channelEpg->GetId(), strId) != 0)
     {
-      if (!(epg = FindEpg(strId)))
+      if (!(channelEpg = FindEpgForChannel(strId)))
         continue;
     }
 
@@ -326,32 +327,35 @@ bool PVRIptvData::LoadEPG(time_t iStart, time_t iEnd)
         (iTmpStart + iMinShiftTime > iEnd))
       continue;
 
-    PVRIptvEpgEntry entry;
-    entry.iBroadcastId = ++iBroadCastId;
-    entry.iChannelId = atoi(strId.c_str());
-    entry.iGenreType = 0;
-    entry.iGenreSubType = 0;
-    entry.strPlotOutline = "";
-    entry.startTime = static_cast<time_t>(iTmpStart);
-    entry.endTime = static_cast<time_t>(iTmpEnd);
+    EpgEntry entry;
+    entry.SetBroadcastId(++iBroadCastId);
+    entry.SetChannelId(atoi(strId.c_str()));
+    entry.SetGenreType(0);
+    entry.SetGenreSubType(0);
+    entry.SetPlotOutline("");
+    entry.SetStartTime(static_cast<time_t>(iTmpStart));
+    entry.SetEndTime(static_cast<time_t>(iTmpEnd));
 
-    GetNodeValue(pChannelNode, "title", entry.strTitle);
-    GetNodeValue(pChannelNode, "desc", entry.strPlot);
-    GetNodeValue(pChannelNode, "category", entry.strGenreString);
-    GetNodeValue(pChannelNode, "sub-title", entry.strEpisodeName);
+    entry.SetTitle(GetNodeValue(pChannelNode, "title"));
+    entry.SetPlot(GetNodeValue(pChannelNode, "desc"));
+    entry.SetGenreString(GetNodeValue(pChannelNode, "category"));
+    entry.SetEpisodeName(GetNodeValue(pChannelNode, "sub-title"));
 
     xml_node<> *pCreditsNode = pChannelNode->first_node("credits");
     if (pCreditsNode != NULL) {
-        GetNodeValue(pCreditsNode, "actor", entry.strCast);
-	GetNodeValue(pCreditsNode, "director", entry.strDirector);
-	GetNodeValue(pCreditsNode, "writer", entry.strWriter);
+        entry.SetCast(GetNodeValue(pCreditsNode, "actor"));
+	      entry.SetDirector(GetNodeValue(pCreditsNode, "director"));
+	      entry.SetWriter(GetNodeValue(pCreditsNode, "writer"));
     }
 
     xml_node<>* pIconNode = pChannelNode->first_node("icon");
-    if (!pIconNode || !GetAttributeValue(pIconNode, "src", entry.strIconPath))
-      entry.strIconPath = "";
+    std::string iconPath;
+    if (!pIconNode || !GetAttributeValue(pIconNode, "src", iconPath))
+      entry.SetIconPath("");
+    else
+      entry.SetIconPath(iconPath);
 
-    epg->epg.push_back(entry);
+    channelEpg->GetEpgEntries().push_back(entry);
   }
 
   xmlDoc.clear();
@@ -656,13 +660,13 @@ bool PVRIptvData::LoadGenres(void)
     if (!StringUtils::IsNaturalNumber(buff))
       continue;
 
-    PVRIptvEpgGenre genre;
-    genre.strGenre = pGenreNode->value();
-    genre.iGenreType = atoi(buff.c_str());
-    genre.iGenreSubType = 0;
+    EpgGenre genre;
+    genre.SetGenreString(pGenreNode->value());
+    genre.SetGenreType(atoi(buff.c_str()));
+    genre.SetGenreSubType(0);
 
     if (GetAttributeValue(pGenreNode, "subtype", buff) && StringUtils::IsNaturalNumber(buff))
-      genre.iGenreSubType = atoi(buff.c_str());
+      genre.SetGenreSubType(atoi(buff.c_str()));
 
     m_genres.push_back(genre);
   }
@@ -792,15 +796,15 @@ PVR_ERROR PVRIptvData::GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid, ti
       }
     }
 
-    const PVRIptvEpgChannel* epg = FindEpgForChannel(myChannel);
-    if (!epg || epg->epg.size() == 0)
+    ChannelEpg* channelEpg = FindEpgForChannel(myChannel);
+    if (!channelEpg || channelEpg->GetEpgEntries().size() == 0)
       return PVR_ERROR_NO_ERROR;
 
     int iShift = m_bTSOverride ? m_iEPGTimeShift : myChannel.GetTvgShift() + m_iEPGTimeShift;
 
-    for (const auto& myTag : epg->epg)
+    for (auto& epgEntry : channelEpg->GetEpgEntries())
     {
-      if ((myTag.endTime + iShift) < iStart)
+      if ((epgEntry.GetEndTime() + iShift) < iStart)
         continue;
 
       int iGenreType, iGenreSubType;
@@ -808,43 +812,11 @@ PVR_ERROR PVRIptvData::GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid, ti
       EPG_TAG tag;
       memset(&tag, 0, sizeof(EPG_TAG));
 
-      tag.iUniqueBroadcastId  = myTag.iBroadcastId;
-      tag.strTitle            = myTag.strTitle.c_str();
-      tag.iUniqueChannelId    = iChannelUid;
-      tag.startTime           = myTag.startTime + iShift;
-      tag.endTime             = myTag.endTime + iShift;
-      tag.strPlotOutline      = myTag.strPlotOutline.c_str();
-      tag.strPlot             = myTag.strPlot.c_str();
-      tag.strOriginalTitle    = nullptr;  /* not supported */
-      tag.strCast             = myTag.strCast.c_str();
-      tag.strDirector         = myTag.strDirector.c_str();
-      tag.strWriter           = myTag.strWriter.c_str();
-      tag.iYear               = 0;     /* not supported */
-      tag.strIMDBNumber       = nullptr;  /* not supported */
-      tag.strIconPath         = myTag.strIconPath.c_str();
-      if (FindEpgGenre(myTag.strGenreString, iGenreType, iGenreSubType))
-      {
-        tag.iGenreType          = iGenreType;
-        tag.iGenreSubType       = iGenreSubType;
-        tag.strGenreDescription = nullptr;
-      }
-      else
-      {
-        tag.iGenreType          = EPG_GENRE_USE_STRING;
-        tag.iGenreSubType       = 0;     /* not supported */
-        tag.strGenreDescription = myTag.strGenreString.c_str();
-      }
-      tag.iParentalRating     = 0;     /* not supported */
-      tag.iStarRating         = 0;     /* not supported */
-      tag.iSeriesNumber       = 0;     /* not supported */
-      tag.iEpisodeNumber      = 0;     /* not supported */
-      tag.iEpisodePartNumber  = 0;     /* not supported */
-      tag.strEpisodeName      = myTag.strEpisodeName.c_str();
-      tag.iFlags              = EPG_TAG_FLAG_UNDEFINED;
+      epgEntry.UpdateTo(tag, iChannelUid, iShift,  m_genres);
 
       PVR->TransferEpgEntry(handle, &tag);
 
-      if ((myTag.startTime + iShift) > iEnd)
+      if ((epgEntry.GetStartTime() + iShift) > iEnd)
         break;
     }
 
@@ -887,51 +859,33 @@ ChannelGroup* PVRIptvData::FindGroup(const std::string& strName)
   return nullptr;
 }
 
-PVRIptvEpgChannel* PVRIptvData::FindEpg(const std::string& strId)
+ChannelEpg* PVRIptvData::FindEpgForChannel(const std::string& strId)
 {
-  for (auto& myEpgChannel : m_epg)
+  for (auto& myChannelEpg : m_epg)
   {
-    if (StringUtils::CompareNoCase(myEpgChannel.strId, strId) == 0)
-      return &myEpgChannel;
+    if (StringUtils::CompareNoCase(myChannelEpg.GetId(), strId) == 0)
+      return &myChannelEpg;
   }
 
   return nullptr;
 }
 
-const PVRIptvEpgChannel* PVRIptvData::FindEpgForChannel(const Channel& channel) const
+ChannelEpg* PVRIptvData::FindEpgForChannel(const Channel& channel)
 {
-  for (const auto& myEpgChannel : m_epg)
+  for (auto& myChannelEpg : m_epg)
   {
-    if (myEpgChannel.strId == channel.GetTvgId())
-      return &myEpgChannel;
+    if (myChannelEpg.GetId() == channel.GetTvgId())
+      return &myChannelEpg;
 
-    const std::string strName = std::regex_replace(myEpgChannel.strName, std::regex(" "), "_");
-    if (strName == channel.GetTvgName() || myEpgChannel.strName == channel.GetTvgName())
-      return &myEpgChannel;
+    const std::string strName = std::regex_replace(myChannelEpg.GetName(), std::regex(" "), "_");
+    if (strName == channel.GetTvgName() || myChannelEpg.GetName() == channel.GetTvgName())
+      return &myChannelEpg;
 
-    if (myEpgChannel.strName == channel.GetChannelName())
-      return &myEpgChannel;
+    if (myChannelEpg.GetName() == channel.GetChannelName())
+      return &myChannelEpg;
   }
 
   return nullptr;
-}
-
-bool PVRIptvData::FindEpgGenre(const std::string& strGenre, int& iType, int& iSubType)
-{
-  if (m_genres.empty())
-    return false;
-
-  for (const auto& myGenre : m_genres)
-  {
-    if (StringUtils::CompareNoCase(myGenre.strGenre, strGenre) == 0)
-    {
-      iType = myGenre.iGenreType;
-      iSubType = myGenre.iGenreSubType;
-      return true;
-    }
-  }
-
-  return false;
 }
 
 /*
@@ -1073,8 +1027,8 @@ void PVRIptvData::ApplyChannelsLogosFromEPG()
 
   for (auto& channel : m_channels)
   {
-    const PVRIptvEpgChannel* epg = FindEpgForChannel(channel);
-    if (!epg || epg->strIcon.empty())
+    const ChannelEpg* channelEpg = FindEpgForChannel(channel);
+    if (!channelEpg || channelEpg->GetIcon().empty())
       continue;
 
     // 1 - prefer logo from playlist
@@ -1082,9 +1036,9 @@ void PVRIptvData::ApplyChannelsLogosFromEPG()
       continue;
 
     // 2 - prefer logo from epg
-    if (!epg->strIcon.empty() && m_settings.GetEpgLogos() == 2)
+    if (!channelEpg->GetIcon().empty() && m_settings.GetEpgLogos() == 2)
     {
-      channel.SetLogoPath(epg->strIcon);
+      channel.SetLogoPath(channelEpg->GetIcon());
       bUpdated = true;
     }
   }
