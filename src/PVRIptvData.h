@@ -24,9 +24,12 @@
  */
 
 #include "iptvsimple/Settings.h"
+
 #include "p8-platform/os.h"
 #include "libXBMC_pvr.h"
 #include "p8-platform/threads/threads.h"
+
+#include "iptvsimple/data/Channel.h"
 
 #include <map>
 #include <vector>
@@ -58,22 +61,6 @@ struct PVRIptvEpgChannel
   std::vector<PVRIptvEpgEntry> epg;
 };
 
-struct PVRIptvChannel
-{
-  bool bRadio;
-  int iUniqueId;
-  int iChannelNumber;
-  int iEncryptionSystem;
-  int iTvgShift;
-  std::string strChannelName;
-  std::string strLogoPath;
-  std::string strStreamURL;
-  std::string strTvgId;
-  std::string strTvgName;
-  std::string strTvgLogo;
-  std::map<std::string, std::string> properties;
-};
-
 struct PVRIptvChannelGroup
 {
   bool bRadio;
@@ -97,7 +84,7 @@ public:
 
   int GetChannelsAmount(void);
   PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio);
-  bool GetChannel(const PVR_CHANNEL& channel, PVRIptvChannel& myChannel);
+  bool GetChannel(const PVR_CHANNEL& channel, iptvsimple::data::Channel& myChannel);
   int GetChannelGroupsAmount(void);
   PVR_ERROR GetChannelGroups(ADDON_HANDLE handle, bool bRadio);
   PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP& group);
@@ -110,10 +97,10 @@ protected:
   bool LoadPlayList(void);
   bool LoadEPG(time_t iStart, time_t iEnd);
   bool LoadGenres(void);
-  const PVRIptvChannel* FindChannel(const std::string& strId, const std::string& strName) const;
+  const iptvsimple::data::Channel* FindChannel(const std::string& strId, const std::string& strName) const;
   const PVRIptvChannelGroup* FindGroup(const std::string& strName) const;
   PVRIptvEpgChannel* FindEpg(const std::string& strId);
-  const PVRIptvEpgChannel* FindEpgForChannel(const PVRIptvChannel& channel) const;
+  const PVRIptvEpgChannel* FindEpgForChannel(const iptvsimple::data::Channel& channel) const;
   bool FindEpgGenre(const std::string& strGenre, int& iType, int& iSubType);
   bool GzipInflate(const std::string& compressedBytes, std::string& uncompressedBytes);
   int GetCachedFileContents(const std::string& strCachedName, const std::string& strFilePath,
@@ -138,7 +125,7 @@ private:
   std::string m_strM3uUrl;
   std::string m_strLogoPath;
   std::vector<PVRIptvChannelGroup> m_groups;
-  std::vector<PVRIptvChannel> m_channels;
+  std::vector<iptvsimple::data::Channel> m_channels;
   std::vector<PVRIptvEpgChannel> m_epg;
   std::vector<PVRIptvEpgGenre> m_genres;
   P8PLATFORM::CMutex m_mutex;

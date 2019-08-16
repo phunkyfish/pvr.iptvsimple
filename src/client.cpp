@@ -25,12 +25,14 @@
 #include "client.h"
 
 #include "PVRIptvData.h"
+#include "iptvsimple/data/Channel.h"
 #include "iptvsimple/utilities/Logger.h"
 #include "p8-platform/util/util.h"
 #include "xbmc_pvr_dll.h"
 
 using namespace ADDON;
 using namespace iptvsimple;
+using namespace iptvsimple::data;
 using namespace iptvsimple::utilities;
 
 #ifdef TARGET_WINDOWS
@@ -46,7 +48,7 @@ using namespace iptvsimple::utilities;
 bool m_bCreated = false;
 ADDON_STATUS m_CurStatus = ADDON_STATUS_UNKNOWN;
 PVRIptvData* m_data = nullptr;
-PVRIptvChannel m_currentChannel;
+Channel m_currentChannel;
 Settings& settings = Settings::GetInstance();
 
 /* User adjustable settings are saved here.
@@ -240,11 +242,11 @@ PVR_ERROR GetChannelStreamProperties(const PVR_CHANNEL* channel, PVR_NAMED_VALUE
   if (m_data && m_data->GetChannel(*channel, m_currentChannel))
   {
     strncpy(properties[0].strName, PVR_STREAM_PROPERTY_STREAMURL, sizeof(properties[0].strName) - 1);
-    strncpy(properties[0].strValue, m_currentChannel.strStreamURL.c_str(), sizeof(properties[0].strValue) - 1);
+    strncpy(properties[0].strValue, m_currentChannel.GetStreamURL().c_str(), sizeof(properties[0].strValue) - 1);
     *iPropertiesCount = 1;
-    if (!m_currentChannel.properties.empty())
+    if (!m_currentChannel.GetProperties().empty())
     {
-      for (auto& prop : m_currentChannel.properties)
+      for (auto& prop : m_currentChannel.GetProperties())
       {
         strncpy(properties[*iPropertiesCount].strName, prop.first.c_str(), sizeof(properties[*iPropertiesCount].strName) - 1);
         strncpy(properties[*iPropertiesCount].strValue, prop.second.c_str(), sizeof(properties[*iPropertiesCount].strName) - 1);

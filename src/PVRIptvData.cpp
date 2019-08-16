@@ -57,6 +57,7 @@
 
 using namespace ADDON;
 using namespace iptvsimple;
+using namespace iptvsimple::data;
 using namespace iptvsimple::utilities;
 using namespace rapidxml;
 
@@ -293,10 +294,10 @@ bool PVRIptvData::LoadEPG(time_t iStart, time_t iEnd)
 
     for (const auto& channel : m_channels)
     {
-      if (channel.iTvgShift + m_iEPGTimeShift < iMinShiftTime)
-        iMinShiftTime = channel.iTvgShift + m_iEPGTimeShift;
-      if (channel.iTvgShift + m_iEPGTimeShift > iMaxShiftTime)
-        iMaxShiftTime = channel.iTvgShift + m_iEPGTimeShift;
+      if (channel.GetTvgShift() + m_iEPGTimeShift < iMinShiftTime)
+        iMinShiftTime = channel.GetTvgShift() + m_iEPGTimeShift;
+      if (channel.GetTvgShift() + m_iEPGTimeShift > iMaxShiftTime)
+        iMaxShiftTime = channel.GetTvgShift() + m_iEPGTimeShift;
     }
   }
 
@@ -390,12 +391,12 @@ bool PVRIptvData::LoadPlayList(void)
   int iEPGTimeShift  = 0;
   std::vector<int> iCurrentGroupId;
 
-  PVRIptvChannel tmpChannel;
-  tmpChannel.strTvgId       = "";
-  tmpChannel.strChannelName = "";
-  tmpChannel.strTvgName     = "";
-  tmpChannel.strTvgLogo     = "";
-  tmpChannel.iTvgShift      = 0;
+  Channel tmpChannel;
+  tmpChannel.SetTvgId("");
+  tmpChannel.SetChannelName("");
+  tmpChannel.SetTvgName("");
+  tmpChannel.SetTvgLogo("");
+  tmpChannel.SetTvgShift(0);
 
   std::string strLine;
   while (std::getline(stream, strLine))
@@ -454,7 +455,7 @@ bool PVRIptvData::LoadPlayList(void)
         iComma++;
         strChnlName = StringUtils::Right(strLine, static_cast<int>(strLine.size() - iComma));
         strChnlName = StringUtils::Trim(strChnlName);
-        tmpChannel.strChannelName = XBMC->UnknownToUTF8(strChnlName.c_str());
+        tmpChannel.SetChannelName(XBMC->UnknownToUTF8(strChnlName.c_str()));
 
         // parse info
         iColon++;
@@ -486,15 +487,15 @@ bool PVRIptvData::LoadPlayList(void)
         fTvgShift = atof(strTvgShift.c_str());
 
         bRadio                = !StringUtils::CompareNoCase(strRadio, "true");
-        tmpChannel.strTvgId   = strTvgId;
-        tmpChannel.strTvgName = XBMC->UnknownToUTF8(strTvgName.c_str());
-        tmpChannel.strTvgLogo = XBMC->UnknownToUTF8(strTvgLogo.c_str());
-        tmpChannel.iTvgShift  = (int)(fTvgShift * 3600.0);
-        tmpChannel.bRadio     = bRadio;
+        tmpChannel.SetTvgId(strTvgId);
+        tmpChannel.SetTvgName(XBMC->UnknownToUTF8(strTvgName.c_str()));
+        tmpChannel.SetTvgLogo(XBMC->UnknownToUTF8(strTvgLogo.c_str()));
+        tmpChannel.SetTvgShift(static_cast<int>(fTvgShift * 3600.0));
+        tmpChannel.SetRadio(bRadio);
 
         if (strTvgShift.empty())
         {
-          tmpChannel.iTvgShift = iEPGTimeShift;
+          tmpChannel.SetTvgShift(iEPGTimeShift);
         }
 
         if (!strGroupName.empty())
@@ -533,7 +534,7 @@ bool PVRIptvData::LoadPlayList(void)
       {
         const std::string prop = value.substr(0, pos);
         const std::string propValue = value.substr(pos + 1);
-        tmpChannel.properties.insert({prop, propValue});
+        tmpChannel.GetProperties().insert({prop, propValue});
       }
     }
     else if (StringUtils::Left(strLine, strlen(EXTVLCOPT_MARKER)) == EXTVLCOPT_MARKER)
@@ -544,7 +545,7 @@ bool PVRIptvData::LoadPlayList(void)
       {
         const std::string prop = value.substr(0, pos);
         const std::string propValue = value.substr(pos + 1);
-        tmpChannel.properties.insert({prop, propValue});
+        tmpChannel.GetProperties().insert({prop, propValue});
 
         Logger::Log(LEVEL_DEBUG, "Found #EXTVLCOPT property: '%s' value: '%s'", prop.c_str(), propValue.c_str());
       }
@@ -556,42 +557,42 @@ bool PVRIptvData::LoadPlayList(void)
     }
     else if (strLine[0] != '#')
     {
-      Logger::Log(LEVEL_DEBUG, "Found URL: '%s' (current channel name: '%s')", strLine.c_str(), tmpChannel.strChannelName.c_str());
+      Logger::Log(LEVEL_DEBUG, "Found URL: '%s' (current channel name: '%s')", strLine.c_str(), tmpChannel.GetChannelName().c_str());
 
       if (bIsRealTime)
-        tmpChannel.properties.insert({PVR_STREAM_PROPERTY_ISREALTIMESTREAM, "true"});
+        tmpChannel.GetProperties().insert({PVR_STREAM_PROPERTY_ISREALTIMESTREAM, "true"});
 
-      PVRIptvChannel channel;
-      channel.iUniqueId         = GetChannelId(tmpChannel.strChannelName.c_str(), strLine.c_str());
-      channel.iChannelNumber    = iChannelNum;
-      channel.strTvgId          = tmpChannel.strTvgId;
-      channel.strChannelName    = tmpChannel.strChannelName;
-      channel.strTvgName        = tmpChannel.strTvgName;
-      channel.strTvgLogo        = tmpChannel.strTvgLogo;
-      channel.iTvgShift         = tmpChannel.iTvgShift;
-      channel.bRadio            = tmpChannel.bRadio;
-      channel.properties        = tmpChannel.properties;
-      channel.strStreamURL      = strLine;
-      channel.iEncryptionSystem = 0;
+      Channel channel;
+      channel.SetUniqueId(GetChannelId(tmpChannel.GetChannelName().c_str(), strLine.c_str()));
+      channel.SetChannelNumber(iChannelNum);
+      channel.SetTvgId(tmpChannel.GetTvgId());
+      channel.SetChannelName(tmpChannel.GetChannelName());
+      channel.SetTvgName(tmpChannel.GetTvgName());
+      channel.SetTvgLogo(tmpChannel.GetTvgLogo());
+      channel.SetTvgShift(tmpChannel.GetTvgShift());
+      channel.SetRadio(tmpChannel.IsRadio());
+      channel.SetProperties(tmpChannel.GetProperties());
+      channel.SetStreamURL(strLine);
+      channel.SetEncryptionSystem(0);
 
       iChannelNum++;
 
       for (int myGroupId : iCurrentGroupId)
       {
-        channel.bRadio = m_groups.at(myGroupId - 1).bRadio;
+        channel.SetRadio(m_groups.at(myGroupId - 1).bRadio);
         m_groups.at(myGroupId - 1).members.push_back(iChannelIndex);
       }
 
       m_channels.push_back(channel);
       iChannelIndex++;
 
-      tmpChannel.strTvgId       = "";
-      tmpChannel.strChannelName = "";
-      tmpChannel.strTvgName     = "";
-      tmpChannel.strTvgLogo     = "";
-      tmpChannel.iTvgShift      = 0;
-      tmpChannel.bRadio         = false;
-      tmpChannel.properties.clear();
+      tmpChannel.SetTvgId("");
+      tmpChannel.SetChannelName("");
+      tmpChannel.SetTvgName("");
+      tmpChannel.SetTvgLogo("");
+      tmpChannel.SetTvgShift(0);
+      tmpChannel.SetRadio(false);
+      tmpChannel.GetProperties().clear();
       bIsRealTime = true;
     }
   }
@@ -681,18 +682,18 @@ PVR_ERROR PVRIptvData::GetChannels(ADDON_HANDLE handle, bool bRadio)
   P8PLATFORM::CLockObject lock(m_mutex);
   for (unsigned int iChannelPtr = 0; iChannelPtr < m_channels.size(); iChannelPtr++)
   {
-    PVRIptvChannel& channel = m_channels.at(iChannelPtr);
-    if (channel.bRadio == bRadio)
+    Channel& channel = m_channels.at(iChannelPtr);
+    if (channel.IsRadio() == bRadio)
     {
       PVR_CHANNEL xbmcChannel;
       memset(&xbmcChannel, 0, sizeof(PVR_CHANNEL));
 
-      xbmcChannel.iUniqueId         = channel.iUniqueId;
-      xbmcChannel.bIsRadio          = channel.bRadio;
-      xbmcChannel.iChannelNumber    = channel.iChannelNumber;
-      strncpy(xbmcChannel.strChannelName, channel.strChannelName.c_str(), sizeof(xbmcChannel.strChannelName) - 1);
-      xbmcChannel.iEncryptionSystem = channel.iEncryptionSystem;
-      strncpy(xbmcChannel.strIconPath, channel.strLogoPath.c_str(), sizeof(xbmcChannel.strIconPath) - 1);
+      xbmcChannel.iUniqueId         = channel.GetUniqueId();
+      xbmcChannel.bIsRadio          = channel.IsRadio();
+      xbmcChannel.iChannelNumber    = channel.GetChannelNumber();
+      strncpy(xbmcChannel.strChannelName, channel.GetChannelName().c_str(), sizeof(xbmcChannel.strChannelName) - 1);
+      xbmcChannel.iEncryptionSystem = channel.GetEncryptionSystem();
+      strncpy(xbmcChannel.strIconPath, channel.GetLogoPath().c_str(), sizeof(xbmcChannel.strIconPath) - 1);
       xbmcChannel.bIsHidden         = false;
 
       PVR->TransferChannelEntry(handle, &xbmcChannel);
@@ -702,22 +703,15 @@ PVR_ERROR PVRIptvData::GetChannels(ADDON_HANDLE handle, bool bRadio)
   return PVR_ERROR_NO_ERROR;
 }
 
-bool PVRIptvData::GetChannel(const PVR_CHANNEL& channel, PVRIptvChannel& myChannel)
+bool PVRIptvData::GetChannel(const PVR_CHANNEL& channel, Channel& myChannel)
 {
   P8PLATFORM::CLockObject lock(m_mutex);
   for (unsigned int iChannelPtr = 0; iChannelPtr < m_channels.size(); iChannelPtr++)
   {
-    PVRIptvChannel& thisChannel = m_channels.at(iChannelPtr);
-    if (thisChannel.iUniqueId == static_cast<int>(channel.iUniqueId))
+    Channel& thisChannel = m_channels.at(iChannelPtr);
+    if (thisChannel.GetUniqueId() == static_cast<int>(channel.iUniqueId))
     {
-      myChannel.iUniqueId         = thisChannel.iUniqueId;
-      myChannel.bRadio            = thisChannel.bRadio;
-      myChannel.iChannelNumber    = thisChannel.iChannelNumber;
-      myChannel.iEncryptionSystem = thisChannel.iEncryptionSystem;
-      myChannel.strChannelName    = thisChannel.strChannelName;
-      myChannel.strLogoPath       = thisChannel.strLogoPath;
-      myChannel.strStreamURL      = thisChannel.strStreamURL;
-      myChannel.properties        = thisChannel.properties;
+      thisChannel.UpdateTo(myChannel);
 
       return true;
     }
@@ -764,13 +758,13 @@ PVR_ERROR PVRIptvData::GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHA
       if ((memberId) < 0 || (memberId) >= static_cast<int>(m_channels.size()))
         continue;
 
-      PVRIptvChannel& channel = m_channels.at(memberId);
+      Channel& channel = m_channels.at(memberId);
       PVR_CHANNEL_GROUP_MEMBER xbmcGroupMember;
       memset(&xbmcGroupMember, 0, sizeof(PVR_CHANNEL_GROUP_MEMBER));
 
       strncpy(xbmcGroupMember.strGroupName, group.strGroupName, sizeof(xbmcGroupMember.strGroupName) - 1);
-      xbmcGroupMember.iChannelUniqueId = channel.iUniqueId;
-      xbmcGroupMember.iChannelNumber = channel.iChannelNumber;
+      xbmcGroupMember.iChannelUniqueId = channel.GetUniqueId();
+      xbmcGroupMember.iChannelNumber = channel.GetChannelNumber();
 
       PVR->TransferChannelGroupMember(handle, &xbmcGroupMember);
     }
@@ -784,7 +778,7 @@ PVR_ERROR PVRIptvData::GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid, ti
   P8PLATFORM::CLockObject lock(m_mutex);
   for (const auto& myChannel : m_channels)
   {
-    if (myChannel.iUniqueId != iChannelUid)
+    if (myChannel.GetUniqueId() != iChannelUid)
       continue;
 
     if (iStart > m_iLastStart || iEnd > m_iLastEnd)
@@ -802,7 +796,7 @@ PVR_ERROR PVRIptvData::GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid, ti
     if (!epg || epg->epg.size() == 0)
       return PVR_ERROR_NO_ERROR;
 
-    int iShift = m_bTSOverride ? m_iEPGTimeShift : myChannel.iTvgShift + m_iEPGTimeShift;
+    int iShift = m_bTSOverride ? m_iEPGTimeShift : myChannel.GetTvgShift() + m_iEPGTimeShift;
 
     for (const auto& myTag : epg->epg)
     {
@@ -860,22 +854,22 @@ PVR_ERROR PVRIptvData::GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid, ti
   return PVR_ERROR_NO_ERROR;
 }
 
-const PVRIptvChannel* PVRIptvData::FindChannel(const std::string& strId, const std::string& strName) const
+const Channel* PVRIptvData::FindChannel(const std::string& strId, const std::string& strName) const
 {
   const std::string strTvgName = std::regex_replace(strName, std::regex(" "), "_");
 
   for (const auto& myChannel : m_channels)
   {
-    if (myChannel.strTvgId == strId)
+    if (myChannel.GetTvgId() == strId)
       return &myChannel;
 
     if (strTvgName == "")
       continue;
 
-    if (myChannel.strTvgName == strTvgName)
+    if (myChannel.GetTvgName() == strTvgName)
       return &myChannel;
 
-    if (myChannel.strChannelName == strName)
+    if (myChannel.GetChannelName() == strName)
       return &myChannel;
   }
 
@@ -904,18 +898,18 @@ PVRIptvEpgChannel* PVRIptvData::FindEpg(const std::string& strId)
   return nullptr;
 }
 
-const PVRIptvEpgChannel* PVRIptvData::FindEpgForChannel(const PVRIptvChannel& channel) const
+const PVRIptvEpgChannel* PVRIptvData::FindEpgForChannel(const Channel& channel) const
 {
   for (const auto& myEpgChannel : m_epg)
   {
-    if (myEpgChannel.strId == channel.strTvgId)
+    if (myEpgChannel.strId == channel.GetTvgId())
       return &myEpgChannel;
 
     const std::string strName = std::regex_replace(myEpgChannel.strName, std::regex(" "), "_");
-    if (strName == channel.strTvgName || myEpgChannel.strName == channel.strTvgName)
+    if (strName == channel.GetTvgName() || myEpgChannel.strName == channel.GetTvgName())
       return &myEpgChannel;
 
-    if (myEpgChannel.strName == channel.strChannelName)
+    if (myEpgChannel.strName == channel.GetChannelName())
       return &myEpgChannel;
   }
 
@@ -1061,14 +1055,14 @@ void PVRIptvData::ApplyChannelsLogos()
 {
   for (auto& channel : m_channels)
   {
-    if (!channel.strTvgLogo.empty())
+    if (!channel.GetTvgLogo().empty())
     {
       if (!m_strLogoPath.empty()
         // special proto
-        && channel.strTvgLogo.find("://") == std::string::npos)
-        channel.strLogoPath = FileUtils::PathCombine(m_strLogoPath, channel.strTvgLogo);
+        && channel.GetTvgLogo().find("://") == std::string::npos)
+        channel.SetLogoPath(FileUtils::PathCombine(m_strLogoPath, channel.GetTvgLogo()));
       else
-        channel.strLogoPath = channel.strTvgLogo;
+        channel.SetLogoPath(channel.GetTvgLogo());
     }
   }
 }
@@ -1084,13 +1078,13 @@ void PVRIptvData::ApplyChannelsLogosFromEPG()
       continue;
 
     // 1 - prefer logo from playlist
-    if (!channel.strLogoPath.empty() && m_settings.GetEpgLogos() == 1)
+    if (!channel.GetLogoPath().empty() && m_settings.GetEpgLogos() == 1)
       continue;
 
     // 2 - prefer logo from epg
     if (!epg->strIcon.empty() && m_settings.GetEpgLogos() == 2)
     {
-      channel.strLogoPath = epg->strIcon;
+      channel.SetLogoPath(epg->strIcon);
       bUpdated = true;
     }
   }
@@ -1124,8 +1118,8 @@ void PVRIptvData::ReloadEPG(const char* strNewPath)
     {
       for (unsigned int iChannelPtr = 0, max = m_channels.size(); iChannelPtr < max; iChannelPtr++)
       {
-        PVRIptvChannel& myChannel = m_channels.at(iChannelPtr);
-        PVR->TriggerEpgUpdate(myChannel.iUniqueId);
+        Channel& myChannel = m_channels.at(iChannelPtr);
+        PVR->TriggerEpgUpdate(myChannel.GetUniqueId());
       }
     }
   }
