@@ -25,7 +25,6 @@
 
 #include "iptvsimple/Settings.h"
 
-#include "p8-platform/os.h"
 #include "libXBMC_pvr.h"
 #include "p8-platform/threads/threads.h"
 
@@ -63,9 +62,6 @@ protected:
   iptvsimple::data::ChannelGroup* FindGroup(const std::string& strName);
   iptvsimple::data::ChannelEpg* FindEpgForChannel(const std::string& strId);
   iptvsimple::data::ChannelEpg* FindEpgForChannel(const iptvsimple::data::Channel& channel);
-  bool GzipInflate(const std::string& compressedBytes, std::string& uncompressedBytes);
-  int GetCachedFileContents(const std::string& strCachedName, const std::string& strFilePath,
-                                    std::string& strContent, const bool bUseCache = false);
   void ApplyChannelsLogos();
   void ApplyChannelsLogosFromEPG();
   std::string ReadMarkerValue(const std::string& strLine, const char* strMarkerName);
