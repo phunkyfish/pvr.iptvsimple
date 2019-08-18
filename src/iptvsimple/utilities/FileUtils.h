@@ -24,7 +24,6 @@
 #include "p8-platform/os.h"
 
 #include <string>
-#include <vector>
 
 namespace iptvsimple
 {
@@ -34,11 +33,11 @@ namespace iptvsimple
     {
     public:
       static std::string PathCombine(const std::string& strPath, const std::string& strFileName);
-      static std::string GetClientFilePath(const std::string& strFileName);
-      static std::string GetUserFilePath(const std::string& strFileName);
+      static std::string GetClientFilePath(const std::string& strClientPath, const std::string& strFileName);
+      static std::string GetUserFilePath(const std::string& strUserPath, const std::string& strFileName);
       static int GetFileContents(const std::string& url, std::string& strContent);
       static bool GzipInflate(const std::string& compressedBytes, std::string& uncompressedBytes);
-      static int GetCachedFileContents(const std::string& strCachedName, const std::string& strFilePath,
+      static int GetCachedFileContents(const std::string& strUserPath, const std::string& strCachedName, const std::string& strFilePath,
                                         std::string& strContent, const bool bUseCache = false);
 
     };

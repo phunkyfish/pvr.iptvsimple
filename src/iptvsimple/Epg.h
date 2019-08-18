@@ -23,34 +23,41 @@
 
 #include "libXBMC_pvr.h"
 
-#include "EpgEntry.h"
+#include "Channels.h"
+#include "data/ChannelEpg.h"
 
 #include <string>
 #include <vector>
 
 namespace iptvsimple
 {
-  namespace data
+  static const int SECONDS_IN_DAY = 86400;
+  static const std::string GENRES_MAP_FILENAME = "genres.xml";
+
+  class Epg
   {
-    class ChannelEpg
-    {
-    public:
-      const std::string& GetId() const { return m_id; }
-      void SetId(const std::string& value) { m_id = value; }
+  public:
+    Epg(iptvsimple::Channels& channels);
 
-      const std::string& GetName() const { return m_name; }
-      void SetName(const std::string& value) { m_name = value; }
+    PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid, time_t iStart, time_t iEnd);
+    void Clear();
 
-      const std::string& GetIcon() const { return m_icon; }
-      void SetIcon(const std::string& value) { m_icon = value; }
+  private:
+    bool LoadEPG(time_t iStart, time_t iEnd);
+    void ReloadEPG(const char* strNewPath);
+    data::ChannelEpg* FindEpgForChannel(const std::string& strId);
+    data::ChannelEpg* FindEpgForChannel(const data::Channel& channel);
+    void ApplyChannelsLogosFromEPG();
+    bool LoadGenres();
 
-      std::vector<EpgEntry>& GetEpgEntries() { return m_epgEntries; }
+    std::string m_strXMLTVUrl;
+    int m_iEPGTimeShift;
+    bool m_bTSOverride;
+    int m_iLastStart;
+    int m_iLastEnd;
 
-    private:
-      std::string m_id;
-      std::string m_name;
-      std::string m_icon;
-      std::vector<EpgEntry> m_epgEntries;
-    };
-  } //namespace data
+    iptvsimple::Channels& m_channels;
+    std::vector<data::ChannelEpg> m_channelEpgs;
+    std::vector<iptvsimple::data::EpgGenre> m_genres;
+  };
 } //namespace iptvsimple

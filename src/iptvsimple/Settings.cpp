@@ -2,11 +2,20 @@
 
 #include "../client.h"
 #include "utilities/FileUtils.h"
-#include "p8-platform/util/StringUtils.h"
 
 using namespace ADDON;
 using namespace iptvsimple;
 using namespace iptvsimple::utilities;
+
+#ifdef TARGET_WINDOWS
+#define snprintf _snprintf
+#ifdef CreateDirectory
+#undef CreateDirectory
+#endif
+#ifdef DeleteFile
+#undef DeleteFile
+#endif
+#endif
 
 /***************************************************************************
  * PVR settings
@@ -78,17 +87,13 @@ ADDON_STATUS Settings::SetValue(const std::string& settingName, const void* sett
 {
   // reset cache and restart addon
 
-  std::string strFile = FileUtils::GetUserFilePath(M3U_FILE_NAME);
+  std::string strFile = FileUtils::GetUserFilePath(GetUserPath(), M3U_FILE_NAME);
   if (XBMC->FileExists(strFile.c_str(), false))
-  {
     XBMC->DeleteFile(strFile.c_str());
-  }
 
-  strFile = FileUtils::GetUserFilePath(TVG_FILE_NAME);
+  strFile = FileUtils::GetUserFilePath(GetUserPath(), TVG_FILE_NAME);
   if (XBMC->FileExists(strFile.c_str(), false))
-  {
     XBMC->DeleteFile(strFile.c_str());
-  }
 
   return ADDON_STATUS_NEED_RESTART;
 }

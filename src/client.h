@@ -26,12 +26,5 @@
 #include "libXBMC_addon.h"
 #include "libXBMC_pvr.h"
 
-/*!
- * @brief PVR macros for string exchange
- */
-#define PVR_STRCPY(dest, source) do { strncpy(dest, source, sizeof(dest) - 1); dest[sizeof(dest) - 1] = '\0'; } while (0)
-#define PVR_STRCLR(dest) memset(dest, 0, sizeof(dest))
-
-extern bool m_bCreated;
 extern ADDON::CHelper_libXBMC_addon* XBMC;
 extern CHelper_libXBMC_pvr* PVR;

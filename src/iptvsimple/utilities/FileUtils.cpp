@@ -22,9 +22,6 @@
 #include "FileUtils.h"
 
 #include "../../client.h"
-#include "../Settings.h"
-#include "Logger.h"
-
 #include "zlib.h"
 
 using namespace iptvsimple;
@@ -47,14 +44,14 @@ std::string FileUtils::PathCombine(const std::string& strPath, const std::string
   return strResult;
 }
 
-std::string FileUtils::GetClientFilePath(const std::string& strFileName)
+std::string FileUtils::GetClientFilePath(const std::string& strClientPath, const std::string& strFileName)
 {
-  return PathCombine(Settings::GetInstance().GetClientPath(), strFileName);
+  return PathCombine(strClientPath, strFileName);
 }
 
-std::string FileUtils::GetUserFilePath(const std::string& strFileName)
+std::string FileUtils::GetUserFilePath(const std::string& strUserPath, const std::string& strFileName)
 {
-  return PathCombine(Settings::GetInstance().GetUserPath(), strFileName);
+  return PathCombine(strUserPath, strFileName);
 }
 
 int FileUtils::GetFileContents(const std::string& url, std::string& strContent)
@@ -77,16 +74,9 @@ int FileUtils::GetFileContents(const std::string& url, std::string& strContent)
  * Author: Andrew Lim Chong Liang
  * http://windrealm.org
  */
+
 bool FileUtils::GzipInflate(const std::string& compressedBytes, std::string& uncompressedBytes)
 {
-
-#define HANDLE_CALL_ZLIB(status) {   \
-  if(status != Z_OK) {        \
-    free(uncomp);             \
-    return false;             \
-  }                           \
-}
-
   if (compressedBytes.size() == 0)
   {
     uncompressedBytes = compressedBytes;
@@ -110,7 +100,12 @@ bool FileUtils::GzipInflate(const std::string& compressedBytes, std::string& unc
 
   bool done = false;
 
-  HANDLE_CALL_ZLIB(inflateInit2(&strm, (16 + MAX_WBITS)));
+  int status = inflateInit2(&strm, (16 + MAX_WBITS));
+  if(status != Z_OK)
+  {
+    free(uncomp);
+    return false;
+  }
 
   while (!done)
   {
@@ -132,27 +127,28 @@ bool FileUtils::GzipInflate(const std::string& compressedBytes, std::string& unc
     if (err == Z_STREAM_END)
       done = true;
     else if (err != Z_OK)
-    {
       break;
-    }
   }
 
-  HANDLE_CALL_ZLIB(inflateEnd(&strm));
+  status = inflateEnd(&strm);
+  if(status != Z_OK)
+  {
+    free(uncomp);
+    return false;
+  }
 
   for (size_t i = 0; i < strm.total_out; ++i)
-  {
     uncompressedBytes += uncomp[i];
-  }
 
   free(uncomp);
   return true;
 }
 
-int FileUtils::GetCachedFileContents(const std::string& strCachedName, const std::string& filePath,
+int FileUtils::GetCachedFileContents(const std::string& strUserPath, const std::string& strCachedName, const std::string& filePath,
                                        std::string& strContents, const bool bUseCache /* false */)
 {
   bool bNeedReload = false;
-  const std::string strCachedPath = FileUtils::GetUserFilePath(strCachedName);
+  const std::string strCachedPath = FileUtils::GetUserFilePath(strUserPath, strCachedName);
   const std::string strFilePath = filePath;
 
   // check cached file is exists
@@ -167,7 +163,9 @@ int FileUtils::GetCachedFileContents(const std::string& strCachedName, const std
     bNeedReload = statCached.st_mtime < statOrig.st_mtime || statOrig.st_mtime == 0;
   }
   else
+  {
     bNeedReload = true;
+  }
 
   if (bNeedReload)
   {

@@ -1,13 +1,8 @@
 #pragma once
 
-#include "utilities/Logger.h"
 #include "xbmc_addon_types.h"
 
 #include <string>
-
-#include <p8-platform/util/StringUtils.h>
-
-class PVRIptvData;
 
 namespace iptvsimple
 {

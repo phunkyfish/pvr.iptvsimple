@@ -24,6 +24,10 @@ message(STATUS "ZLIB_LIBRARIES: ${ZLIB_LIBRARIES}")
 set(IPTV_SOURCES src/client.cpp
                  src/PVRIptvData.cpp
                  src/iptvsimple/Settings.cpp
+                 src/iptvsimple/Channels.cpp
+                 src/iptvsimple/ChannelGroups.cpp
+                 src/iptvsimple/Epg.cpp
+                 src/iptvsimple/PlaylistLoader.cpp
                  src/iptvsimple/data/Channel.cpp
                  src/iptvsimple/data/ChannelEpg.cpp
                  src/iptvsimple/data/ChannelGroup.cpp
@@ -35,6 +39,10 @@ set(IPTV_SOURCES src/client.cpp
 set(IPTV_HEADERS src/client.h
                  src/PVRIptvData.h
                  src/iptvsimple/Settings.h
+                 src/iptvsimple/Channels.h
+                 src/iptvsimple/ChannelGroups.h
+                 src/iptvsimple/Epg.h
+                 src/iptvsimple/PlaylistLoader.h
                  src/iptvsimple/data/Channel.h
                  src/iptvsimple/data/ChannelEpg.h
                  src/iptvsimple/data/ChannelGroup.h

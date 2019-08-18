@@ -1,13 +1,11 @@
 #include "ChannelGroup.h"
 
-#include "../Settings.h"
-#include "inttypes.h"
-#include "p8-platform/util/StringUtils.h"
-#include "util/XMLUtils.h"
-
-#include <regex>
-
 using namespace iptvsimple;
 using namespace iptvsimple::data;
-using namespace iptvsimple::utilities;
 
+void ChannelGroup::UpdateTo(PVR_CHANNEL_GROUP& left) const
+{
+  left.bIsRadio = m_radio;
+  left.iPosition = 0; // groups default order, unused
+  strncpy(left.strGroupName, m_groupName.c_str(), sizeof(left.strGroupName));
+}

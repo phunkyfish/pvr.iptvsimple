@@ -23,8 +23,6 @@
 
 #include "libXBMC_pvr.h"
 
-#include <map>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -45,6 +43,8 @@ namespace iptvsimple
       void SetGroupName(const std::string& value) { m_groupName = value; }
 
       std::vector<int>& GetMemberChannels() { return m_memberChannels; }
+
+      void UpdateTo(PVR_CHANNEL_GROUP& left) const;
 
     private:
       bool m_radio;

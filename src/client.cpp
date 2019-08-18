@@ -118,9 +118,7 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   const std::string clientPath = pvrprops->strClientPath;
 
   if (!XBMC->DirectoryExists(settings.GetUserPath().c_str()))
-  {
     XBMC->CreateDirectory(settings.GetUserPath().c_str());
-  }
 
   settings.ReadFromAddon(userPath, clientPath);
 

@@ -23,34 +23,29 @@
 
 #include "libXBMC_pvr.h"
 
-#include "EpgEntry.h"
+#include "Channels.h"
+#include "data/ChannelGroup.h"
 
 #include <string>
 #include <vector>
 
 namespace iptvsimple
 {
-  namespace data
+  class ChannelGroups
   {
-    class ChannelEpg
-    {
-    public:
-      const std::string& GetId() const { return m_id; }
-      void SetId(const std::string& value) { m_id = value; }
+  public:
+    ChannelGroups(iptvsimple::Channels& channels);
 
-      const std::string& GetName() const { return m_name; }
-      void SetName(const std::string& value) { m_name = value; }
+    int GetChannelGroupsAmount();
+    void GetChannelGroups(std::vector<PVR_CHANNEL_GROUP>& kodiChannelGroups, bool radio) const;
+    PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP& group);
 
-      const std::string& GetIcon() const { return m_icon; }
-      void SetIcon(const std::string& value) { m_icon = value; }
+    iptvsimple::data::ChannelGroup* FindChannelGroup(const std::string& strName);
+    std::vector<data::ChannelGroup>& GetChannelGroupsList() { return m_channelGroups; }
+    void Clear();
 
-      std::vector<EpgEntry>& GetEpgEntries() { return m_epgEntries; }
-
-    private:
-      std::string m_id;
-      std::string m_name;
-      std::string m_icon;
-      std::vector<EpgEntry> m_epgEntries;
-    };
-  } //namespace data
+  private:
+    iptvsimple::Channels& m_channels;
+    std::vector<iptvsimple::data::ChannelGroup> m_channelGroups;
+  };
 } //namespace iptvsimple

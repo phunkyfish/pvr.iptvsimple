@@ -24,9 +24,7 @@
 #include "libXBMC_pvr.h"
 
 #include <map>
-#include <memory>
 #include <string>
-#include <vector>
 
 namespace iptvsimple
 {
@@ -72,6 +70,7 @@ namespace iptvsimple
       void SetProperties(std::map<std::string, std::string>& value) { m_properties = value; }
 
       void UpdateTo(Channel& left) const;
+      void UpdateTo(PVR_CHANNEL& left) const;
 
     private:
       bool m_radio;
