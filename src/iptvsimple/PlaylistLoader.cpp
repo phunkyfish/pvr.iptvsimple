@@ -49,11 +49,6 @@ bool PlaylistLoader::LoadPlayList(void)
   std::vector<int> iCurrentGroupId;
 
   Channel tmpChannel;
-  tmpChannel.SetTvgId("");
-  tmpChannel.SetChannelName("");
-  tmpChannel.SetTvgName("");
-  tmpChannel.SetTvgLogo("");
-  tmpChannel.SetTvgShift(0);
 
   std::string strLine;
   while (std::getline(stream, strLine))
@@ -217,17 +212,10 @@ bool PlaylistLoader::LoadPlayList(void)
         tmpChannel.GetProperties().insert({PVR_STREAM_PROPERTY_ISREALTIMESTREAM, "true"});
 
       Channel channel;
+      tmpChannel.UpdateTo(channel);
       channel.SetUniqueId(GetChannelId(tmpChannel.GetChannelName().c_str(), strLine.c_str()));
-      channel.SetChannelNumber(iChannelNum);
-      channel.SetTvgId(tmpChannel.GetTvgId());
-      channel.SetChannelName(tmpChannel.GetChannelName());
-      channel.SetTvgName(tmpChannel.GetTvgName());
-      channel.SetTvgLogo(tmpChannel.GetTvgLogo());
-      channel.SetTvgShift(tmpChannel.GetTvgShift());
-      channel.SetRadio(tmpChannel.IsRadio());
-      channel.SetProperties(tmpChannel.GetProperties());
+      channel.SetChannelNumber(iChannelNum++);
       channel.SetStreamURL(strLine);
-      channel.SetEncryptionSystem(0);
 
       iChannelNum++;
 
@@ -240,13 +228,7 @@ bool PlaylistLoader::LoadPlayList(void)
       m_channels.GetChannelsList().push_back(channel);
       iChannelIndex++;
 
-      tmpChannel.SetTvgId("");
-      tmpChannel.SetChannelName("");
-      tmpChannel.SetTvgName("");
-      tmpChannel.SetTvgLogo("");
-      tmpChannel.SetTvgShift(0);
-      tmpChannel.SetRadio(false);
-      tmpChannel.GetProperties().clear();
+      tmpChannel.Reset();
       bIsRealTime = true;
     }
   }

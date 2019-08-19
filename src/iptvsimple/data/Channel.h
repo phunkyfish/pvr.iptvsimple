@@ -71,19 +71,20 @@ namespace iptvsimple
 
       void UpdateTo(Channel& left) const;
       void UpdateTo(PVR_CHANNEL& left) const;
+      void Reset();
 
     private:
-      bool m_radio;
-      int m_uniqueId;
-      int m_channelNumber;
-      int m_encryptionSystem;
-      int m_tvgShift;
-      std::string m_channelName;
-      std::string m_logoPath;
-      std::string m_streamURL;
-      std::string m_tvgId;
-      std::string m_tvgName;
-      std::string m_tvgLogo;
+      bool m_radio = false;
+      int m_uniqueId = 0;
+      int m_channelNumber = 0;
+      int m_encryptionSystem = 0;
+      int m_tvgShift = 0;
+      std::string m_channelName = "";
+      std::string m_logoPath = "";
+      std::string m_streamURL = "";
+      std::string m_tvgId = "";
+      std::string m_tvgName = "";
+      std::string m_tvgLogo = "";
       std::map<std::string, std::string> m_properties;
     };
   } //namespace data
