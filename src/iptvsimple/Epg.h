@@ -40,22 +40,22 @@ namespace iptvsimple
   public:
     Epg(iptvsimple::Channels& channels);
 
-    PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid, time_t iStart, time_t iEnd);
+    PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid, time_t start, time_t end);
     void Clear();
 
   private:
     bool LoadEPG(time_t iStart, time_t iEnd);
-    void ReloadEPG(const char* strNewPath);
-    data::ChannelEpg* FindEpgForChannel(const std::string& strId);
+    void ReloadEPG(const char* newPath);
+    data::ChannelEpg* FindEpgForChannel(const std::string& id);
     data::ChannelEpg* FindEpgForChannel(const data::Channel& channel);
     void ApplyChannelsLogosFromEPG();
     bool LoadGenres();
 
-    std::string m_strXMLTVUrl;
-    int m_iEPGTimeShift;
-    bool m_bTSOverride;
-    int m_iLastStart;
-    int m_iLastEnd;
+    std::string m_xmltvUrl;
+    int m_epgTimeShift;
+    bool m_tsOverride;
+    int m_lastStart;
+    int m_lastEnd;
 
     iptvsimple::Channels& m_channels;
     std::vector<data::ChannelEpg> m_channelEpgs;

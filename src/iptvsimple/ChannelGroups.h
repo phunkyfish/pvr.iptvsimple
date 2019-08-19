@@ -40,7 +40,7 @@ namespace iptvsimple
     void GetChannelGroups(std::vector<PVR_CHANNEL_GROUP>& kodiChannelGroups, bool radio) const;
     PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP& group);
 
-    iptvsimple::data::ChannelGroup* FindChannelGroup(const std::string& strName);
+    iptvsimple::data::ChannelGroup* FindChannelGroup(const std::string& name);
     std::vector<data::ChannelGroup>& GetChannelGroupsList() { return m_channelGroups; }
     void Clear();
 

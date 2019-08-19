@@ -7,21 +7,21 @@ using namespace iptvsimple;
 using namespace iptvsimple::data;
 using namespace rapidxml;
 
-bool EpgGenre::UpdateFrom(rapidxml::xml_node<>* pGenreNode)
+bool EpgGenre::UpdateFrom(rapidxml::xml_node<>* genreNode)
 {
-  std::string buff;
-  if (!GetAttributeValue(pGenreNode, "type", buff))
+  std::string buffer;
+  if (!GetAttributeValue(genreNode, "type", buffer))
     return false;
 
-  if (!StringUtils::IsNaturalNumber(buff))
+  if (!StringUtils::IsNaturalNumber(buffer))
     return false;
 
-  m_genreString = pGenreNode->value();
-  m_genreType = atoi(buff.c_str());
+  m_genreString = genreNode->value();
+  m_genreType = atoi(buffer.c_str());
   m_genreSubType = 0;
 
-  if (GetAttributeValue(pGenreNode, "subtype", buff) && StringUtils::IsNaturalNumber(buff))
-    m_genreSubType = atoi(buff.c_str());
+  if (GetAttributeValue(genreNode, "subtype", buffer) && StringUtils::IsNaturalNumber(buffer))
+    m_genreSubType = atoi(buffer.c_str());
 
   return true;
 }

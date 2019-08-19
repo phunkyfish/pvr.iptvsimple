@@ -21,11 +21,11 @@ using namespace rapidxml;
 Epg::Epg(Channels& channels)
       : m_channels(channels)
 {
-  m_strXMLTVUrl = Settings::GetInstance().GetTvgPath();
-  m_iEPGTimeShift = Settings::GetInstance().GetEpgTimeshift();
-  m_bTSOverride = Settings::GetInstance().GetTsOverride();
-  m_iLastStart = 0;
-  m_iLastEnd = 0;
+  m_xmltvUrl = Settings::GetInstance().GetTvgPath();
+  m_epgTimeShift = Settings::GetInstance().GetEpgTimeshift();
+  m_tsOverride = Settings::GetInstance().GetTsOverride();
+  m_lastStart = 0;
+  m_lastEnd = 0;
 }
 
 void Epg::Clear()
@@ -34,9 +34,9 @@ void Epg::Clear()
   m_genres.clear();
 }
 
-bool Epg::LoadEPG(time_t iStart, time_t iEnd)
+bool Epg::LoadEPG(time_t start, time_t end)
 {
-  if (m_strXMLTVUrl.empty())
+  if (m_xmltvUrl.empty())
   {
     Logger::Log(LEVEL_NOTICE, "EPG file path is not configured. EPG not loaded.");
     return false;
@@ -44,23 +44,23 @@ bool Epg::LoadEPG(time_t iStart, time_t iEnd)
 
   std::string data;
   std::string decompressed;
-  int iReaded = 0;
+  int bytesRead = 0;
 
-  int iCount = 0;
-  while (iCount < 3) // max 3 tries
+  int count = 0;
+  while (count < 3) // max 3 tries
   {
-    if ((iReaded = FileUtils::GetCachedFileContents(Settings::GetInstance().GetUserPath(), TVG_FILE_NAME, m_strXMLTVUrl, data, Settings::GetInstance().UseEPGCache())) != 0)
+    if ((bytesRead = FileUtils::GetCachedFileContents(Settings::GetInstance().GetUserPath(), TVG_FILE_NAME, m_xmltvUrl, data, Settings::GetInstance().UseEPGCache())) != 0)
       break;
 
-    Logger::Log(LEVEL_ERROR, "Unable to load EPG file '%s':  file is missing or empty. :%dth try.", m_strXMLTVUrl.c_str(), ++iCount);
+    Logger::Log(LEVEL_ERROR, "Unable to load EPG file '%s':  file is missing or empty. :%dth try.", m_xmltvUrl.c_str(), ++count);
 
-    if (iCount < 3)
+    if (count < 3)
       std::this_thread::sleep_for(std::chrono::microseconds(2 * 1000 * 1000)); // sleep 2 sec before next try.
   }
 
-  if (iReaded == 0)
+  if (bytesRead == 0)
   {
-    Logger::Log(LEVEL_ERROR, "Unable to load EPG file '%s':  file is missing or empty. After %d tries.", m_strXMLTVUrl.c_str(), iCount);
+    Logger::Log(LEVEL_ERROR, "Unable to load EPG file '%s':  file is missing or empty. After %d tries.", m_xmltvUrl.c_str(), count);
     return false;
   }
 
@@ -71,7 +71,7 @@ bool Epg::LoadEPG(time_t iStart, time_t iEnd)
   {
     if (!FileUtils::GzipInflate(data, decompressed))
     {
-      Logger::Log(LEVEL_ERROR, "Invalid EPG file '%s': unable to decompress file.", m_strXMLTVUrl.c_str());
+      Logger::Log(LEVEL_ERROR, "Invalid EPG file '%s': unable to decompress file.", m_xmltvUrl.c_str());
       return false;
     }
     buffer = &(decompressed[0]);
@@ -91,7 +91,7 @@ bool Epg::LoadEPG(time_t iStart, time_t iEnd)
         buffer += 0x200; // RECORDSIZE = 512
       else
       {
-        Logger::Log(LEVEL_ERROR, "Invalid EPG file '%s': unable to parse file.", m_strXMLTVUrl.c_str());
+        Logger::Log(LEVEL_ERROR, "Invalid EPG file '%s': unable to parse file.", m_xmltvUrl.c_str());
         return false;
       }
     }
@@ -135,37 +135,37 @@ bool Epg::LoadEPG(time_t iStart, time_t iEnd)
     return false;
   }
 
-  int iMinShiftTime = m_iEPGTimeShift;
-  int iMaxShiftTime = m_iEPGTimeShift;
-  if (!m_bTSOverride)
+  int minShiftTime = m_epgTimeShift;
+  int maxShiftTime = m_epgTimeShift;
+  if (!m_tsOverride)
   {
-    iMinShiftTime = SECONDS_IN_DAY;
-    iMaxShiftTime = -SECONDS_IN_DAY;
+    minShiftTime = SECONDS_IN_DAY;
+    maxShiftTime = -SECONDS_IN_DAY;
 
     for (const auto& channel : m_channels.GetChannelsList())
     {
-      if (channel.GetTvgShift() + m_iEPGTimeShift < iMinShiftTime)
-        iMinShiftTime = channel.GetTvgShift() + m_iEPGTimeShift;
-      if (channel.GetTvgShift() + m_iEPGTimeShift > iMaxShiftTime)
-        iMaxShiftTime = channel.GetTvgShift() + m_iEPGTimeShift;
+      if (channel.GetTvgShift() + m_epgTimeShift < minShiftTime)
+        minShiftTime = channel.GetTvgShift() + m_epgTimeShift;
+      if (channel.GetTvgShift() + m_epgTimeShift > maxShiftTime)
+        maxShiftTime = channel.GetTvgShift() + m_epgTimeShift;
     }
   }
 
   ChannelEpg* channelEpg = nullptr;
   for (pChannelNode = pRootElement->first_node("programme"); pChannelNode; pChannelNode = pChannelNode->next_sibling("programme"))
   {
-    std::string strId;
-    if (!GetAttributeValue(pChannelNode, "channel", strId))
+    std::string id;
+    if (!GetAttributeValue(pChannelNode, "channel", id))
       continue;
 
-    if (!channelEpg || StringUtils::CompareNoCase(channelEpg->GetId(), strId) != 0)
+    if (!channelEpg || StringUtils::CompareNoCase(channelEpg->GetId(), id) != 0)
     {
-      if (!(channelEpg = FindEpgForChannel(strId)))
+      if (!(channelEpg = FindEpgForChannel(id)))
         continue;
     }
 
     EpgEntry entry;
-    if (entry.UpdateFrom(pChannelNode, channelEpg, strId, iBroadCastId + 1, iStart, iEnd, iMaxShiftTime, iMinShiftTime))
+    if (entry.UpdateFrom(pChannelNode, channelEpg, id, iBroadCastId + 1, start, end, maxShiftTime, minShiftTime))
     {
       iBroadCastId++;
 
@@ -184,16 +184,16 @@ bool Epg::LoadEPG(time_t iStart, time_t iEnd)
   return true;
 }
 
-void Epg::ReloadEPG(const char* strNewPath)
+void Epg::ReloadEPG(const char* newPath)
 {
   //P8PLATFORM::CLockObject lock(m_mutex);
   //TODO Lock should happen in calling class
-  if (strNewPath != m_strXMLTVUrl)
+  if (newPath != m_xmltvUrl)
   {
-    m_strXMLTVUrl = strNewPath;
+    m_xmltvUrl = newPath;
     Clear();
 
-    if (LoadEPG(m_iLastStart, m_iLastEnd))
+    if (LoadEPG(m_lastStart, m_lastEnd))
     {
       for (const auto& myChannel : m_channels.GetChannelsList())
       {
@@ -203,21 +203,21 @@ void Epg::ReloadEPG(const char* strNewPath)
   }
 }
 
-PVR_ERROR Epg::GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid, time_t iStart, time_t iEnd)
+PVR_ERROR Epg::GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid, time_t start, time_t end)
 {
   for (const auto& myChannel : m_channels.GetChannelsList())
   {
     if (myChannel.GetUniqueId() != iChannelUid)
       continue;
 
-    if (iStart > m_iLastStart || iEnd > m_iLastEnd)
+    if (start > m_lastStart || end > m_lastEnd)
     {
       // reload EPG for new time interval only
-      LoadEPG(iStart, iEnd);
+      LoadEPG(start, end);
       {
         // doesn't matter is epg loaded or not we shouldn't try to load it for same interval
-        m_iLastStart = static_cast<int>(iStart);
-        m_iLastEnd = static_cast<int>(iEnd);
+        m_lastStart = static_cast<int>(start);
+        m_lastEnd = static_cast<int>(end);
       }
     }
 
@@ -225,21 +225,21 @@ PVR_ERROR Epg::GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid, time_t iSt
     if (!channelEpg || channelEpg->GetEpgEntries().size() == 0)
       return PVR_ERROR_NO_ERROR;
 
-    int iShift = m_bTSOverride ? m_iEPGTimeShift : myChannel.GetTvgShift() + m_iEPGTimeShift;
+    int shift = m_tsOverride ? m_epgTimeShift : myChannel.GetTvgShift() + m_epgTimeShift;
 
     for (auto& epgEntry : channelEpg->GetEpgEntries())
     {
-      if ((epgEntry.GetEndTime() + iShift) < iStart)
+      if ((epgEntry.GetEndTime() + shift) < start)
         continue;
 
       EPG_TAG tag;
       memset(&tag, 0, sizeof(EPG_TAG));
 
-      epgEntry.UpdateTo(tag, iChannelUid, iShift, m_genres);
+      epgEntry.UpdateTo(tag, iChannelUid, shift, m_genres);
 
       PVR->TransferEpgEntry(handle, &tag);
 
-      if ((epgEntry.GetStartTime() + iShift) > iEnd)
+      if ((epgEntry.GetStartTime() + shift) > end)
         break;
     }
 
@@ -249,11 +249,11 @@ PVR_ERROR Epg::GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid, time_t iSt
   return PVR_ERROR_NO_ERROR;
 }
 
-ChannelEpg* Epg::FindEpgForChannel(const std::string& strId)
+ChannelEpg* Epg::FindEpgForChannel(const std::string& id)
 {
   for (auto& myChannelEpg : m_channelEpgs)
   {
-    if (StringUtils::CompareNoCase(myChannelEpg.GetId(), strId) == 0)
+    if (StringUtils::CompareNoCase(myChannelEpg.GetId(), id) == 0)
       return &myChannelEpg;
   }
 
@@ -267,8 +267,8 @@ ChannelEpg* Epg::FindEpgForChannel(const Channel& channel)
     if (myChannelEpg.GetId() == channel.GetTvgId())
       return &myChannelEpg;
 
-    const std::string strName = std::regex_replace(myChannelEpg.GetName(), std::regex(" "), "_");
-    if (strName == channel.GetTvgName() || myChannelEpg.GetName() == channel.GetTvgName())
+    const std::string name = std::regex_replace(myChannelEpg.GetName(), std::regex(" "), "_");
+    if (name == channel.GetTvgName() || myChannelEpg.GetName() == channel.GetTvgName())
       return &myChannelEpg;
 
     if (myChannelEpg.GetName() == channel.GetChannelName())
@@ -280,7 +280,7 @@ ChannelEpg* Epg::FindEpgForChannel(const Channel& channel)
 
 void Epg::ApplyChannelsLogosFromEPG()
 {
-  bool bUpdated = false;
+  bool updated = false;
 
   for (auto& channel : m_channels.GetChannelsList())
   {
@@ -296,11 +296,11 @@ void Epg::ApplyChannelsLogosFromEPG()
     if (!channelEpg->GetIcon().empty() && Settings::GetInstance().GetEpgLogos() == 2)
     {
       channel.SetLogoPath(channelEpg->GetIcon());
-      bUpdated = true;
+      updated = true;
     }
   }
 
-  if (bUpdated)
+  if (updated)
     PVR->TriggerChannelUpdate();
 }
 
@@ -309,16 +309,16 @@ bool Epg::LoadGenres()
   std::string data;
 
   // try to load genres from userdata folder
-  std::string strFilePath = FileUtils::GetUserFilePath(Settings::GetInstance().GetUserPath(), GENRES_MAP_FILENAME);
-  if (!XBMC->FileExists(strFilePath.c_str(), false))
+  std::string filePath = FileUtils::GetUserFilePath(Settings::GetInstance().GetUserPath(), GENRES_MAP_FILENAME);
+  if (!XBMC->FileExists(filePath.c_str(), false))
   {
     // try to load file from addom folder
-    strFilePath = FileUtils::GetClientFilePath(Settings::GetInstance().GetClientPath(), GENRES_MAP_FILENAME);
-    if (!XBMC->FileExists(strFilePath.c_str(), false))
+    filePath = FileUtils::GetClientFilePath(Settings::GetInstance().GetClientPath(), GENRES_MAP_FILENAME);
+    if (!XBMC->FileExists(filePath.c_str(), false))
       return false;
   }
 
-  FileUtils::GetFileContents(strFilePath, data);
+  FileUtils::GetFileContents(filePath, data);
 
   if (data.empty())
     return false;

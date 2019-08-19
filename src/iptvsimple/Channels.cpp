@@ -13,7 +13,7 @@ using namespace iptvsimple::utilities;
 
 Channels::Channels()
 {
-  m_strLogoPath = Settings::GetInstance().GetLogoPath();
+  m_logoPath = Settings::GetInstance().GetLogoPath();
 }
 
 void Channels::Clear()
@@ -26,11 +26,11 @@ int Channels::GetChannelsAmount()
   return m_channels.size();
 }
 
-void Channels::GetChannels(std::vector<PVR_CHANNEL>& kodiChannels, bool bRadio) const
+void Channels::GetChannels(std::vector<PVR_CHANNEL>& kodiChannels, bool radio) const
 {
   for (const auto& channel : m_channels)
   {
-    if (channel.IsRadio() == bRadio)
+    if (channel.IsRadio() == radio)
     {
       Logger::Log(LEVEL_DEBUG, "%s - Transfer channel '%s', ChannelIndex '%d'", __FUNCTION__, channel.GetChannelName().c_str(),
                   channel.GetUniqueId());
@@ -58,22 +58,22 @@ bool Channels::GetChannel(const PVR_CHANNEL& channel, Channel& myChannel)
   return false;
 }
 
-const Channel* Channels::FindChannel(const std::string& strId, const std::string& strName) const
+const Channel* Channels::FindChannel(const std::string& id, const std::string& name) const
 {
-  const std::string strTvgName = std::regex_replace(strName, std::regex(" "), "_");
+  const std::string tvgName = std::regex_replace(name, std::regex(" "), "_");
 
   for (const auto& myChannel : m_channels)
   {
-    if (myChannel.GetTvgId() == strId)
+    if (myChannel.GetTvgId() == id)
       return &myChannel;
 
-    if (strTvgName == "")
+    if (tvgName == "")
       continue;
 
-    if (myChannel.GetTvgName() == strTvgName)
+    if (myChannel.GetTvgName() == tvgName)
       return &myChannel;
 
-    if (myChannel.GetChannelName() == strName)
+    if (myChannel.GetChannelName() == name)
       return &myChannel;
   }
 
@@ -86,8 +86,8 @@ void Channels::ApplyChannelLogos()
   {
     if (!channel.GetTvgLogo().empty())
     {
-      if (!m_strLogoPath.empty() && channel.GetTvgLogo().find("://") == std::string::npos) // special proto
-        channel.SetLogoPath(FileUtils::PathCombine(m_strLogoPath, channel.GetTvgLogo()));
+      if (!m_logoPath.empty() && channel.GetTvgLogo().find("://") == std::string::npos) // special proto
+        channel.SetLogoPath(FileUtils::PathCombine(m_logoPath, channel.GetTvgLogo()));
       else
         channel.SetLogoPath(channel.GetTvgLogo());
     }
@@ -100,7 +100,7 @@ void Channels::ReapplyChannelLogos(const char* strNewPath)
   //TODO Lock should happen in calling class
   if (strlen(strNewPath) > 0)
   {
-    m_strLogoPath = strNewPath;
+    m_logoPath = strNewPath;
     ApplyChannelLogos();
 
     PVR->TriggerChannelUpdate();

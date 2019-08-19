@@ -25,23 +25,23 @@
 #include <string>
 
 template<class Ch>
-inline std::string GetNodeValue(const rapidxml::xml_node<Ch>* pRootNode, const char* strTag)
+inline std::string GetNodeValue(const rapidxml::xml_node<Ch>* rootNode, const char* tag)
 {
-  rapidxml::xml_node<Ch>* pChildNode = pRootNode->first_node(strTag);
-  if (!pChildNode)
+  rapidxml::xml_node<Ch>* childNode = rootNode->first_node(tag);
+  if (!childNode)
     return "";
 
-  return pChildNode->value();
+  return childNode->value();
 }
 
 template<class Ch>
-inline bool GetAttributeValue(const rapidxml::xml_node<Ch>* pNode, const char* strAttributeName, std::string& strStringValue)
+inline bool GetAttributeValue(const rapidxml::xml_node<Ch>* node, const char* attributeName, std::string& stringValue)
 {
-  rapidxml::xml_attribute<Ch>* pAttribute = pNode->first_attribute(strAttributeName);
-  if (!pAttribute)
+  rapidxml::xml_attribute<Ch>* attribute = node->first_attribute(attributeName);
+  if (!attribute)
   {
     return false;
   }
-  strStringValue = pAttribute->value();
+  stringValue = attribute->value();
   return true;
 }

@@ -115,17 +115,17 @@ long long ParseDateTime(const std::string& strDate)
 
 } // unnamed namespace
 
-bool EpgEntry::UpdateFrom(rapidxml::xml_node<>* pChannelNode, ChannelEpg* channelEpg, const std::string& id, int broadcastId,
-                          int iStart, int iEnd, int iMaxShiftTime, int iMinShiftTime)
+bool EpgEntry::UpdateFrom(rapidxml::xml_node<>* channelNode, ChannelEpg* channelEpg, const std::string& id, int broadcastId,
+                          int start, int end, int maxShiftTime, int minShiftTime)
 {
   std::string strStart, strStop;
-  if (!GetAttributeValue(pChannelNode, "start", strStart) || !GetAttributeValue(pChannelNode, "stop", strStop))
+  if (!GetAttributeValue(channelNode, "start", strStart) || !GetAttributeValue(channelNode, "stop", strStop))
     return false;
 
-  long long iTmpStart = ParseDateTime(strStart);
-  long long iTmpEnd = ParseDateTime(strStop);
+  long long tmpStart = ParseDateTime(strStart);
+  long long tmpEnd = ParseDateTime(strStop);
 
-  if ((iTmpEnd + iMaxShiftTime < iStart) || (iTmpStart + iMinShiftTime > iEnd))
+  if ((tmpEnd + maxShiftTime < start) || (tmpStart + minShiftTime > end))
     return false;
 
   m_broadcastId = broadcastId;
@@ -133,25 +133,25 @@ bool EpgEntry::UpdateFrom(rapidxml::xml_node<>* pChannelNode, ChannelEpg* channe
   m_genreType = 0;
   m_genreSubType = 0;
   m_plotOutline= "";
-  m_startTime = static_cast<time_t>(iTmpStart);
-  m_endTime = static_cast<time_t>(iTmpEnd);
+  m_startTime = static_cast<time_t>(tmpStart);
+  m_endTime = static_cast<time_t>(tmpEnd);
 
-  m_title = GetNodeValue(pChannelNode, "title");
-  m_plot = GetNodeValue(pChannelNode, "desc");
-  m_genreString = GetNodeValue(pChannelNode, "category");
-  m_episodeName = GetNodeValue(pChannelNode, "sub-title");
+  m_title = GetNodeValue(channelNode, "title");
+  m_plot = GetNodeValue(channelNode, "desc");
+  m_genreString = GetNodeValue(channelNode, "category");
+  m_episodeName = GetNodeValue(channelNode, "sub-title");
 
-  xml_node<> *pCreditsNode = pChannelNode->first_node("credits");
-  if (pCreditsNode != NULL)
+  xml_node<> *creditsNode = channelNode->first_node("credits");
+  if (creditsNode != NULL)
   {
-    m_cast = GetNodeValue(pCreditsNode, "actor");
-    m_director = GetNodeValue(pCreditsNode, "director");
-    m_writer = GetNodeValue(pCreditsNode, "writer");
+    m_cast = GetNodeValue(creditsNode, "actor");
+    m_director = GetNodeValue(creditsNode, "director");
+    m_writer = GetNodeValue(creditsNode, "writer");
   }
 
-  xml_node<>* pIconNode = pChannelNode->first_node("icon");
+  xml_node<>* iconNode = channelNode->first_node("icon");
   std::string iconPath;
-  if (!pIconNode || !GetAttributeValue(pIconNode, "src", iconPath))
+  if (!iconNode || !GetAttributeValue(iconNode, "src", iconPath))
     m_iconPath = "";
   else
     m_iconPath = iconPath;

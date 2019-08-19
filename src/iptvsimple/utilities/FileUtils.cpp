@@ -27,46 +27,46 @@
 using namespace iptvsimple;
 using namespace iptvsimple::utilities;
 
-std::string FileUtils::PathCombine(const std::string& strPath, const std::string& strFileName)
+std::string FileUtils::PathCombine(const std::string& path, const std::string& fileName)
 {
-  std::string strResult = strPath;
-  if (strResult.at(strResult.size() - 1) == '\\' ||
-      strResult.at(strResult.size() - 1) == '/')
+  std::string result = path;
+  if (result.at(result.size() - 1) == '\\' ||
+      result.at(result.size() - 1) == '/')
   {
-    strResult.append(strFileName);
+    result.append(fileName);
   }
   else
   {
-    strResult.append("/");
-    strResult.append(strFileName);
+    result.append("/");
+    result.append(fileName);
   }
 
-  return strResult;
+  return result;
 }
 
-std::string FileUtils::GetClientFilePath(const std::string& strClientPath, const std::string& strFileName)
+std::string FileUtils::GetClientFilePath(const std::string& clientPath, const std::string& fileName)
 {
-  return PathCombine(strClientPath, strFileName);
+  return PathCombine(clientPath, fileName);
 }
 
-std::string FileUtils::GetUserFilePath(const std::string& strUserPath, const std::string& strFileName)
+std::string FileUtils::GetUserFilePath(const std::string& userPath, const std::string& fileName)
 {
-  return PathCombine(strUserPath, strFileName);
+  return PathCombine(userPath, fileName);
 }
 
-int FileUtils::GetFileContents(const std::string& url, std::string& strContent)
+int FileUtils::GetFileContents(const std::string& url, std::string& content)
 {
-  strContent.clear();
+  content.clear();
   void* fileHandle = XBMC->OpenFile(url.c_str(), 0);
   if (fileHandle)
   {
     char buffer[1024];
     while (int bytesRead = XBMC->ReadFile(fileHandle, buffer, 1024))
-      strContent.append(buffer, bytesRead);
+      content.append(buffer, bytesRead);
     XBMC->CloseFile(fileHandle);
   }
 
-  return strContent.length();
+  return content.length();
 }
 
 /*
@@ -144,45 +144,44 @@ bool FileUtils::GzipInflate(const std::string& compressedBytes, std::string& unc
   return true;
 }
 
-int FileUtils::GetCachedFileContents(const std::string& strUserPath, const std::string& strCachedName, const std::string& filePath,
-                                       std::string& strContents, const bool bUseCache /* false */)
+int FileUtils::GetCachedFileContents(const std::string& userPath, const std::string& cachedName, const std::string& filePath,
+                                       std::string& contents, const bool useCache /* false */)
 {
-  bool bNeedReload = false;
-  const std::string strCachedPath = FileUtils::GetUserFilePath(strUserPath, strCachedName);
-  const std::string strFilePath = filePath;
+  bool needReload = false;
+  const std::string cachedPath = FileUtils::GetUserFilePath(userPath, cachedName);
 
   // check cached file is exists
-  if (bUseCache && XBMC->FileExists(strCachedPath.c_str(), false))
+  if (useCache && XBMC->FileExists(cachedPath.c_str(), false))
   {
     struct __stat64 statCached;
     struct __stat64 statOrig;
 
-    XBMC->StatFile(strCachedPath.c_str(), &statCached);
-    XBMC->StatFile(strFilePath.c_str(), &statOrig);
+    XBMC->StatFile(cachedPath.c_str(), &statCached);
+    XBMC->StatFile(filePath.c_str(), &statOrig);
 
-    bNeedReload = statCached.st_mtime < statOrig.st_mtime || statOrig.st_mtime == 0;
+    needReload = statCached.st_mtime < statOrig.st_mtime || statOrig.st_mtime == 0;
   }
   else
   {
-    bNeedReload = true;
+    needReload = true;
   }
 
-  if (bNeedReload)
+  if (needReload)
   {
-    FileUtils::GetFileContents(strFilePath, strContents);
+    FileUtils::GetFileContents(filePath, contents);
 
     // write to cache
-    if (bUseCache && strContents.length() > 0)
+    if (useCache && contents.length() > 0)
     {
-      void* fileHandle = XBMC->OpenFileForWrite(strCachedPath.c_str(), true);
+      void* fileHandle = XBMC->OpenFileForWrite(cachedPath.c_str(), true);
       if (fileHandle)
       {
-        XBMC->WriteFile(fileHandle, strContents.c_str(), strContents.length());
+        XBMC->WriteFile(fileHandle, contents.c_str(), contents.length());
         XBMC->CloseFile(fileHandle);
       }
     }
-    return strContents.length();
+    return contents.length();
   }
 
-  return FileUtils::GetFileContents(strCachedPath, strContents);
+  return FileUtils::GetFileContents(cachedPath, contents);
 }

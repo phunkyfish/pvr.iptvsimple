@@ -68,11 +68,11 @@ PVR_ERROR ChannelGroups::GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_C
   return PVR_ERROR_NO_ERROR;
 }
 
-ChannelGroup* ChannelGroups::FindChannelGroup(const std::string& strName)
+ChannelGroup* ChannelGroups::FindChannelGroup(const std::string& name)
 {
   for (auto& myGroup : m_channelGroups)
   {
-    if (myGroup.GetGroupName() == strName)
+    if (myGroup.GetGroupName() == name)
       return &myGroup;
   }
 

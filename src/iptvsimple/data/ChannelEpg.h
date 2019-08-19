@@ -48,7 +48,7 @@ namespace iptvsimple
 
       std::vector<EpgEntry>& GetEpgEntries() { return m_epgEntries; }
 
-      bool UpdateFrom(rapidxml::xml_node<>* pChannelNode, iptvsimple::Channels& channels);
+      bool UpdateFrom(rapidxml::xml_node<>* channelNode, iptvsimple::Channels& channels);
 
     private:
       std::string m_id;

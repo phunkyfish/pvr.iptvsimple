@@ -6,24 +6,24 @@ using namespace iptvsimple;
 using namespace iptvsimple::data;
 using namespace rapidxml;
 
-bool ChannelEpg::UpdateFrom(xml_node<>* pChannelNode, Channels& channels)
+bool ChannelEpg::UpdateFrom(xml_node<>* channelNode, Channels& channels)
 {
-  std::string strName;
-  std::string strId;
-  if (!GetAttributeValue(pChannelNode, "id", strId))
+  std::string name;
+  std::string id;
+  if (!GetAttributeValue(channelNode, "id", id))
     return false;
 
-  strName = GetNodeValue(pChannelNode, "display-name");
-  if (!channels.FindChannel(strId, strName))
+  name = GetNodeValue(channelNode, "display-name");
+  if (!channels.FindChannel(id, name))
     return false;
 
-  m_id = strId;
-  m_name = strName;
+  m_id = id;
+  m_name = name;
 
   // get icon if available
-  xml_node<>* pIconNode = pChannelNode->first_node("icon");
+  xml_node<>* iconNode = channelNode->first_node("icon");
   std::string icon = m_icon;
-  if (!pIconNode || !GetAttributeValue(pIconNode, "src", icon))
+  if (!iconNode || !GetAttributeValue(iconNode, "src", icon))
     m_icon = "";
   else
     m_icon = icon;

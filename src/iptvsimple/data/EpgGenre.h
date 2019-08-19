@@ -41,7 +41,7 @@ namespace iptvsimple
       const std::string& GetGenreString() const { return m_genreString; }
       void SetGenreString(const std::string& value) { m_genreString = value; }
 
-      bool UpdateFrom(rapidxml::xml_node<>* pGenreNode);
+      bool UpdateFrom(rapidxml::xml_node<>* genreNode);
 
     private:
       int m_genreType;

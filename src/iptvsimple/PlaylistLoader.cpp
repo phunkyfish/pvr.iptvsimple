@@ -19,61 +19,61 @@ using namespace iptvsimple::utilities;
 PlaylistLoader::PlaylistLoader(Channels& channels, ChannelGroups& channelGroups)
       : m_channels(channels), m_channelGroups(channelGroups)
 {
-  m_strM3uUrl = Settings::GetInstance().GetM3UPath();
+  m_m3uUrl = Settings::GetInstance().GetM3UPath();
 }
 
 bool PlaylistLoader::LoadPlayList(void)
 {
-  if (m_strM3uUrl.empty())
+  if (m_m3uUrl.empty())
   {
     Logger::Log(LEVEL_NOTICE, "Playlist file path is not configured. Channels not loaded.");
     return false;
   }
 
-  std::string strPlaylistContent;
-  if (!FileUtils::GetCachedFileContents(Settings::GetInstance().GetUserPath(), M3U_FILE_NAME, m_strM3uUrl, strPlaylistContent, Settings::GetInstance().UseM3UCache()))
+  std::string playlistContent;
+  if (!FileUtils::GetCachedFileContents(Settings::GetInstance().GetUserPath(), M3U_FILE_NAME, m_m3uUrl, playlistContent, Settings::GetInstance().UseM3UCache()))
   {
-    Logger::Log(LEVEL_ERROR, "Unable to load playlist file '%s':  file is missing or empty.", m_strM3uUrl.c_str());
+    Logger::Log(LEVEL_ERROR, "Unable to load playlist file '%s':  file is missing or empty.", m_m3uUrl.c_str());
     return false;
   }
 
-  std::stringstream stream(strPlaylistContent);
+  std::stringstream stream(playlistContent);
 
   /* load channels */
-  bool bFirst        = true;
-  bool bIsRealTime   = true;
-  int iChannelIndex  = 0;
-  int iUniqueGroupId = 0;
-  int iChannelNum    = Settings::GetInstance().GetStartNumber();
-  int iEPGTimeShift  = 0;
-  std::vector<int> iCurrentGroupId;
+  bool isFirstLine        = true;
+  bool isRealTime   = true;
+  int channelIndex  = 0;
+  int uniqueGroupId = 0;
+  int channelNumber    = Settings::GetInstance().GetStartNumber();
+  int epgTimeShift  = 0;
+  std::vector<int> currentGroupIdList;
 
   Channel tmpChannel;
 
-  std::string strLine;
-  while (std::getline(stream, strLine))
+  std::string line;
+  while (std::getline(stream, line))
   {
-    strLine = StringUtils::TrimRight(strLine, " \t\r\n");
-    strLine = StringUtils::TrimLeft(strLine, " \t");
+    line = StringUtils::TrimRight(line, " \t\r\n");
+    line = StringUtils::TrimLeft(line, " \t");
 
-    Logger::Log(LEVEL_DEBUG, "Read line: '%s'", strLine.c_str());
+    Logger::Log(LEVEL_DEBUG, "Read line: '%s'", line.c_str());
 
-    if (strLine.empty())
+    if (line.empty())
     {
       continue;
     }
 
-    if (bFirst)
+    if (isFirstLine)
     {
-      bFirst = false;
+      isFirstLine = false;
 
-      if (StringUtils::Left(strLine, 3) == "\xEF\xBB\xBF")
-        strLine.erase(0, 3);
+      if (StringUtils::Left(line, 3) == "\xEF\xBB\xBF")
+        line.erase(0, 3);
 
-      if (StringUtils::StartsWith(strLine, M3U_START_MARKER))
+      if (StringUtils::StartsWith(line, M3U_START_MARKER))
       {
-        double fTvgShift = atof(ReadMarkerValue(strLine, TVG_INFO_SHIFT_MARKER).c_str());
-        iEPGTimeShift = (int)(fTvgShift * 3600.0);
+        double tvgShiftDecimal = atof(ReadMarkerValue(line, TVG_INFO_SHIFT_MARKER).c_str());
+        epgTimeShift = static_cast<int>(tvgShiftDecimal * 3600.0);
         continue;
       }
       else
@@ -81,14 +81,14 @@ bool PlaylistLoader::LoadPlayList(void)
         Logger::Log(LEVEL_ERROR,
                   "URL '%s' missing %s descriptor on line 1, attempting to "
                   "parse it anyway.",
-                  m_strM3uUrl.c_str(), M3U_START_MARKER.c_str());
+                  m_m3uUrl.c_str(), M3U_START_MARKER.c_str());
       }
     }
 
-    if (StringUtils::StartsWith(strLine, M3U_INFO_MARKER))
+    if (StringUtils::StartsWith(line, M3U_INFO_MARKER))
     {
-      bool        bRadio       = false;
-      double      fTvgShift    = 0;
+      bool isRadio             = false;
+      double tvgShiftDecimal   = 0;
       std::string strChnlNo    = "";
       std::string strChnlName  = "";
       std::string strTvgId     = "";
@@ -99,20 +99,20 @@ bool PlaylistLoader::LoadPlayList(void)
       std::string strRadio     = "";
 
       // parse line
-      int iColon = static_cast<int>(strLine.find(':'));
-      int iComma = static_cast<int>(strLine.rfind(','));
-      if (iColon >= 0 && iComma >= 0 && iComma > iColon)
+      int colonIndex = static_cast<int>(line.find(':'));
+      int commaIndex = static_cast<int>(line.rfind(','));
+      if (colonIndex >= 0 && commaIndex >= 0 && commaIndex > colonIndex)
       {
         // parse name
-        iComma++;
-        strChnlName = StringUtils::Right(strLine, static_cast<int>(strLine.size() - iComma));
+        commaIndex++;
+        strChnlName = StringUtils::Right(line, static_cast<int>(line.size() - commaIndex));
         strChnlName = StringUtils::Trim(strChnlName);
         tmpChannel.SetChannelName(XBMC->UnknownToUTF8(strChnlName.c_str()));
 
         // parse info
-        iColon++;
-        iComma--;
-        const std::string strInfoLine = StringUtils::Mid(strLine, iColon, iComma - iColon);
+        colonIndex++;
+        commaIndex--;
+        const std::string strInfoLine = StringUtils::Mid(line, colonIndex, commaIndex - colonIndex);
 
         strTvgId      = ReadMarkerValue(strInfoLine, TVG_INFO_ID_MARKER);
         strTvgName    = ReadMarkerValue(strInfoLine, TVG_INFO_NAME_MARKER);
@@ -133,24 +133,24 @@ bool PlaylistLoader::LoadPlayList(void)
           strTvgLogo = strChnlName;
 
         if (!strChnlNo.empty())
-          iChannelNum = atoi(strChnlNo.c_str());
+          channelNumber = atoi(strChnlNo.c_str());
 
-        fTvgShift = atof(strTvgShift.c_str());
+        tvgShiftDecimal = atof(strTvgShift.c_str());
 
-        bRadio                = !StringUtils::CompareNoCase(strRadio, "true");
+        isRadio = !StringUtils::CompareNoCase(strRadio, "true");
         tmpChannel.SetTvgId(strTvgId);
         tmpChannel.SetTvgName(XBMC->UnknownToUTF8(strTvgName.c_str()));
         tmpChannel.SetTvgLogo(XBMC->UnknownToUTF8(strTvgLogo.c_str()));
-        tmpChannel.SetTvgShift(static_cast<int>(fTvgShift * 3600.0));
-        tmpChannel.SetRadio(bRadio);
+        tmpChannel.SetTvgShift(static_cast<int>(tvgShiftDecimal * 3600.0));
+        tmpChannel.SetRadio(isRadio);
 
         if (strTvgShift.empty())
-          tmpChannel.SetTvgShift(iEPGTimeShift);
+          tmpChannel.SetTvgShift(epgTimeShift);
 
         if (!strGroupName.empty())
         {
           std::stringstream streamGroups(strGroupName);
-          iCurrentGroupId.clear();
+          currentGroupIdList.clear();
 
           while (std::getline(streamGroups, strGroupName, ';'))
           {
@@ -161,23 +161,23 @@ bool PlaylistLoader::LoadPlayList(void)
             {
               ChannelGroup group;
               group.SetGroupName(strGroupName);
-              group.SetGroupId(++iUniqueGroupId);
-              group.SetRadio(bRadio);
+              group.SetGroupId(++uniqueGroupId);
+              group.SetRadio(isRadio);
 
               m_channelGroups.GetChannelGroupsList().push_back(group);
-              iCurrentGroupId.push_back(iUniqueGroupId);
+              currentGroupIdList.push_back(uniqueGroupId);
             }
             else
             {
-              iCurrentGroupId.push_back(pGroup->GetGroupId());
+              currentGroupIdList.push_back(pGroup->GetGroupId());
             }
           }
         }
       }
     }
-    else if (StringUtils::StartsWith(strLine, KODIPROP_MARKER))
+    else if (StringUtils::StartsWith(line, KODIPROP_MARKER))
     {
-      const std::string value = ReadMarkerValue(strLine, KODIPROP_MARKER);
+      const std::string value = ReadMarkerValue(line, KODIPROP_MARKER);
       auto pos = value.find('=');
       if (pos != std::string::npos)
       {
@@ -186,9 +186,9 @@ bool PlaylistLoader::LoadPlayList(void)
         tmpChannel.GetProperties().insert({prop, propValue});
       }
     }
-    else if (StringUtils::StartsWith(strLine, EXTVLCOPT_MARKER))
+    else if (StringUtils::StartsWith(line, EXTVLCOPT_MARKER))
     {
-      const std::string value = ReadMarkerValue(strLine, EXTVLCOPT_MARKER);
+      const std::string value = ReadMarkerValue(line, EXTVLCOPT_MARKER);
       auto pos = value.find('=');
       if (pos != std::string::npos)
       {
@@ -199,37 +199,37 @@ bool PlaylistLoader::LoadPlayList(void)
         Logger::Log(LEVEL_DEBUG, "Found #EXTVLCOPT property: '%s' value: '%s'", prop.c_str(), propValue.c_str());
       }
     }
-    else if (StringUtils::StartsWith(strLine, PLAYLIST_TYPE_MARKER))
+    else if (StringUtils::StartsWith(line, PLAYLIST_TYPE_MARKER))
     {
-      if (ReadMarkerValue(strLine, PLAYLIST_TYPE_MARKER) == "VOD")
-        bIsRealTime = false;
+      if (ReadMarkerValue(line, PLAYLIST_TYPE_MARKER) == "VOD")
+        isRealTime = false;
     }
-    else if (strLine[0] != '#')
+    else if (line[0] != '#')
     {
-      Logger::Log(LEVEL_DEBUG, "Found URL: '%s' (current channel name: '%s')", strLine.c_str(), tmpChannel.GetChannelName().c_str());
+      Logger::Log(LEVEL_DEBUG, "Found URL: '%s' (current channel name: '%s')", line.c_str(), tmpChannel.GetChannelName().c_str());
 
-      if (bIsRealTime)
+      if (isRealTime)
         tmpChannel.GetProperties().insert({PVR_STREAM_PROPERTY_ISREALTIMESTREAM, "true"});
 
       Channel channel;
       tmpChannel.UpdateTo(channel);
-      channel.SetUniqueId(GetChannelId(tmpChannel.GetChannelName().c_str(), strLine.c_str()));
-      channel.SetChannelNumber(iChannelNum++);
-      channel.SetStreamURL(strLine);
+      channel.SetUniqueId(GetChannelId(tmpChannel.GetChannelName().c_str(), line.c_str()));
+      channel.SetChannelNumber(channelNumber++);
+      channel.SetStreamURL(line);
 
-      iChannelNum++;
+      channelNumber++;
 
-      for (int myGroupId : iCurrentGroupId)
+      for (int myGroupId : currentGroupIdList)
       {
         channel.SetRadio(m_channelGroups.GetChannelGroupsList().at(myGroupId - 1).IsRadio());
-        m_channelGroups.GetChannelGroupsList().at(myGroupId - 1).GetMemberChannels().push_back(iChannelIndex);
+        m_channelGroups.GetChannelGroupsList().at(myGroupId - 1).GetMemberChannels().push_back(channelIndex);
       }
 
       m_channels.GetChannelsList().push_back(channel);
-      iChannelIndex++;
+      channelIndex++;
 
       tmpChannel.Reset();
-      bIsRealTime = true;
+      isRealTime = true;
     }
   }
 
@@ -237,7 +237,7 @@ bool PlaylistLoader::LoadPlayList(void)
 
   if (m_channels.GetChannelsAmount() == 0)
   {
-    Logger::Log(LEVEL_ERROR, "Unable to load channels from file '%s':  file is corrupted.", m_strM3uUrl.c_str());
+    Logger::Log(LEVEL_ERROR, "Unable to load channels from file '%s':  file is corrupted.", m_m3uUrl.c_str());
     return false;
   }
 
@@ -247,13 +247,13 @@ bool PlaylistLoader::LoadPlayList(void)
   return true;
 }
 
-void PlaylistLoader::ReloadPlayList(const char* strNewPath)
+void PlaylistLoader::ReloadPlayList(const char* newPath)
 {
   //P8PLATFORM::CLockObject lock(m_mutex);
   //TODO Lock should happe in calling class
-  if (strNewPath != m_strM3uUrl)
+  if (newPath != m_m3uUrl)
   {
-    m_strM3uUrl = strNewPath;
+    m_m3uUrl = newPath;
     m_channels.Clear();
     m_channelGroups.Clear();
 
@@ -265,42 +265,42 @@ void PlaylistLoader::ReloadPlayList(const char* strNewPath)
   }
 }
 
-std::string PlaylistLoader::ReadMarkerValue(const std::string& strLine, const std::string& strMarkerName)
+std::string PlaylistLoader::ReadMarkerValue(const std::string& line, const std::string& markerName)
 {
-  int iMarkerStart = static_cast<int>(strLine.find(strMarkerName));
-  if (iMarkerStart >= 0)
+  int markerStart = static_cast<int>(line.find(markerName));
+  if (markerStart >= 0)
   {
-    const std::string strMarker = strMarkerName;
-    iMarkerStart += strMarker.length();
-    if (iMarkerStart < static_cast<int>(strLine.length()))
+    const std::string marker = markerName;
+    markerStart += marker.length();
+    if (markerStart < static_cast<int>(line.length()))
     {
-      char cFind = ' ';
-      if (strLine[iMarkerStart] == '"')
+      char find = ' ';
+      if (line[markerStart] == '"')
       {
-        cFind = '"';
-        iMarkerStart++;
+        find = '"';
+        markerStart++;
       }
-      int iMarkerEnd = static_cast<int>(strLine.find(cFind, iMarkerStart));
-      if (iMarkerEnd < 0)
+      int markerEnd = static_cast<int>(line.find(find, markerStart));
+      if (markerEnd < 0)
       {
-        iMarkerEnd = strLine.length();
+        markerEnd = line.length();
       }
-      return strLine.substr(iMarkerStart, iMarkerEnd - iMarkerStart);
+      return line.substr(markerStart, markerEnd - markerStart);
     }
   }
 
   return std::string("");
 }
 
-int PlaylistLoader::GetChannelId(const char* strChannelName, const char* strStreamUrl)
+int PlaylistLoader::GetChannelId(const char* channelName, const char* streamUrl)
 {
-  std::string concat(strChannelName);
-  concat.append(strStreamUrl);
+  std::string concat(channelName);
+  concat.append(streamUrl);
 
-  const char* strString = concat.c_str();
+  const char* calcString = concat.c_str();
   int iId = 0;
   int c;
-  while ((c = *strString++))
+  while ((c = *calcString++))
     iId = ((iId << 5) + iId) + c; /* iId * 33 + c */
 
   return abs(iId);

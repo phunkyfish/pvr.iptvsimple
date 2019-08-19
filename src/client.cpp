@@ -177,20 +177,20 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
 
 const char* GetBackendName(void)
 {
-  static const char* strBackendName = "IPTV Simple PVR Add-on";
-  return strBackendName;
+  static const char* backendName = "IPTV Simple PVR Add-on";
+  return backendName;
 }
 
 const char* GetBackendVersion(void)
 {
-  static std::string strBackendVersion = STR(IPTV_VERSION);
-  return strBackendVersion.c_str();
+  static std::string backendVersion = STR(IPTV_VERSION);
+  return backendVersion.c_str();
 }
 
 const char* GetConnectionString(void)
 {
-  static std::string strConnectionString = "connected";
-  return strConnectionString.c_str();
+  static std::string connectionString = "connected";
+  return connectionString.c_str();
 }
 
 const char* GetBackendHostname(void)

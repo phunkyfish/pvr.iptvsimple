@@ -85,8 +85,8 @@ namespace iptvsimple
       void SetWriter(const std::string& value) { m_writer = value; }
 
       void UpdateTo(EPG_TAG& left, int iChannelUid, int timeShift, std::vector<EpgGenre>& genres);
-      bool UpdateFrom(rapidxml::xml_node<>* pChannelNode, iptvsimple::data::ChannelEpg* channelEpg, const std::string& id, int broadcastId,
-                      int iStart, int iEnd, int iMaxShiftTime, int iMinShiftTime);
+      bool UpdateFrom(rapidxml::xml_node<>* channelNode, iptvsimple::data::ChannelEpg* channelEpg, const std::string& id, int broadcastId,
+                      int start, int end, int maxShiftTime, int minShiftTime);
 
     private:
       bool SetEpgGenre(std::vector<EpgGenre> genres, const std::string& genreToFind);
