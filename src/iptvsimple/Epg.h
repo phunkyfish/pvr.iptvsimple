@@ -25,6 +25,7 @@
 
 #include "Channels.h"
 #include "data/ChannelEpg.h"
+#include "data/EpgGenre.h"
 
 #include <string>
 #include <vector>

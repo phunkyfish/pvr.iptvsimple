@@ -49,7 +49,8 @@ set(IPTV_HEADERS src/client.h
                  src/iptvsimple/data/EpgEntry.h
                  src/iptvsimple/data/EpgGenre.h
                  src/iptvsimple/utilities/FileUtils.h
-                 src/iptvsimple/utilities/Logger.h)
+                 src/iptvsimple/utilities/Logger.h
+                 src/iptvsimple/utilities/XMLUtils.h)
 
 addon_version(pvr.iptvsimple IPTV)
 add_definitions(-DIPTV_VERSION=${IPTV_VERSION})

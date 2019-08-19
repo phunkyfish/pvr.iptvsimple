@@ -24,6 +24,8 @@
 #include "libXBMC_pvr.h"
 
 #include "EpgEntry.h"
+#include "../Channels.h"
+#include "rapidxml/rapidxml.hpp"
 
 #include <string>
 #include <vector>
@@ -45,6 +47,8 @@ namespace iptvsimple
       void SetIcon(const std::string& value) { m_icon = value; }
 
       std::vector<EpgEntry>& GetEpgEntries() { return m_epgEntries; }
+
+      bool UpdateFrom(rapidxml::xml_node<>* pChannelNode, iptvsimple::Channels& channels);
 
     private:
       std::string m_id;

@@ -4,6 +4,7 @@
 #include "../client.h"
 #include "utilities/FileUtils.h"
 #include "utilities/Logger.h"
+#include "utilities/XMLUtils.h"
 
 #include "p8-platform/util/StringUtils.h"
 #include "rapidxml/rapidxml.hpp"
@@ -16,78 +17,6 @@ using namespace iptvsimple;
 using namespace iptvsimple::data;
 using namespace iptvsimple::utilities;
 using namespace rapidxml;
-
-template<class Ch>
-inline std::string GetNodeValue(const xml_node<Ch>* pRootNode, const char* strTag)
-{
-  xml_node<Ch>* pChildNode = pRootNode->first_node(strTag);
-  if (!pChildNode)
-    return "";
-
-  return pChildNode->value();
-}
-
-template<class Ch>
-inline bool GetAttributeValue(const xml_node<Ch>* pNode, const char* strAttributeName, std::string& strStringValue)
-{
-  xml_attribute<Ch>* pAttribute = pNode->first_attribute(strAttributeName);
-  if (!pAttribute)
-  {
-    return false;
-  }
-  strStringValue = pAttribute->value();
-  return true;
-}
-
-namespace
-{
-
-// Adapted from https://stackoverflow.com/a/31533119
-
-// Conversion from UTC date to second, signed 64-bit adjustable epoch version.
-// Written by François Grieu, 2015-07-21; public domain.
-
-long long MakeTime(int year, int month, int day)
-{
-  return static_cast<long long>(year) * 365 + year / 4 - year / 100 * 3 / 4 + (month + 2) * 153 / 5 + day;
-}
-
-long long GetUTCTime(int year, int mon, int mday, int hour, int min, int sec)
-{
-  int m = mon - 1;
-  int y = year + 100;
-
-  if (m < 2)
-  {
-    m += 12;
-    --y;
-  }
-
-  return (((MakeTime(y, m, mday) - MakeTime(1970 + 99, 12, 1)) * 24 + hour) * 60 + min) * 60 + sec;
-}
-
-long long ParseDateTime(const std::string& strDate)
-{
-  int year = 2000;
-  int mon = 1;
-  int mday = 1;
-  int hour = 0;
-  int min = 0;
-  int sec = 0;
-  char offset_sign = '+';
-  int offset_hours = 0;
-  int offset_minutes = 0;
-
-  sscanf(strDate.c_str(), "%04d%02d%02d%02d%02d%02d %c%02d%02d", &year, &mon, &mday, &hour, &min, &sec, &offset_sign, &offset_hours, &offset_minutes);
-
-  long offset_of_date = (offset_hours * 60 + offset_minutes) * 60;
-  if (offset_sign == '-')
-    offset_of_date = -offset_of_date;
-
-  return GetUTCTime(year, mon, mday, hour, min, sec) - offset_of_date;
-}
-
-} // unnamed namespace
 
 Epg::Epg(Channels& channels)
       : m_channels(channels)
@@ -194,28 +123,10 @@ bool Epg::LoadEPG(time_t iStart, time_t iEnd)
   xml_node<>* pChannelNode = nullptr;
   for (pChannelNode = pRootElement->first_node("channel"); pChannelNode; pChannelNode = pChannelNode->next_sibling("channel"))
   {
-    std::string strName;
-    std::string strId;
-    if (!GetAttributeValue(pChannelNode, "id", strId))
-      continue;
-
-    strName = GetNodeValue(pChannelNode, "display-name");
-    if (!m_channels.FindChannel(strId, strName))
-      continue;
-
     ChannelEpg channelEpg;
-    channelEpg.SetId(strId);
-    channelEpg.SetName(strName);
 
-    // get icon if available
-    xml_node<>* pIconNode = pChannelNode->first_node("icon");
-    std::string icon = channelEpg.GetIcon();
-    if (!pIconNode || !GetAttributeValue(pIconNode, "src", icon))
-      channelEpg.SetIcon("");
-    else
-      channelEpg.SetIcon(icon);
-
-    m_channelEpgs.push_back(channelEpg);
+    if (channelEpg.UpdateFrom(pChannelNode, m_channels))
+      m_channelEpgs.push_back(channelEpg);
   }
 
   if (m_channelEpgs.size() == 0)
@@ -253,45 +164,13 @@ bool Epg::LoadEPG(time_t iStart, time_t iEnd)
         continue;
     }
 
-    std::string strStart, strStop;
-    if (!GetAttributeValue(pChannelNode, "start", strStart) || !GetAttributeValue(pChannelNode, "stop", strStop))
-      continue;
-
-    long long iTmpStart = ParseDateTime(strStart);
-    long long iTmpEnd = ParseDateTime(strStop);
-
-    if ((iTmpEnd + iMaxShiftTime < iStart) || (iTmpStart + iMinShiftTime > iEnd))
-      continue;
-
     EpgEntry entry;
-    entry.SetBroadcastId(++iBroadCastId);
-    entry.SetChannelId(atoi(strId.c_str()));
-    entry.SetGenreType(0);
-    entry.SetGenreSubType(0);
-    entry.SetPlotOutline("");
-    entry.SetStartTime(static_cast<time_t>(iTmpStart));
-    entry.SetEndTime(static_cast<time_t>(iTmpEnd));
+    if (entry.UpdateFrom(pChannelNode, channelEpg, strId, iBroadCastId + 1, iStart, iEnd, iMaxShiftTime, iMinShiftTime))
+    {
+      iBroadCastId++;
 
-    entry.SetTitle(GetNodeValue(pChannelNode, "title"));
-    entry.SetPlot(GetNodeValue(pChannelNode, "desc"));
-    entry.SetGenreString(GetNodeValue(pChannelNode, "category"));
-    entry.SetEpisodeName(GetNodeValue(pChannelNode, "sub-title"));
-
-    xml_node<> *pCreditsNode = pChannelNode->first_node("credits");
-    if (pCreditsNode != NULL) {
-        entry.SetCast(GetNodeValue(pCreditsNode, "actor"));
-	      entry.SetDirector(GetNodeValue(pCreditsNode, "director"));
-	      entry.SetWriter(GetNodeValue(pCreditsNode, "writer"));
+      channelEpg->GetEpgEntries().push_back(entry);
     }
-
-    xml_node<>* pIconNode = pChannelNode->first_node("icon");
-    std::string iconPath;
-    if (!pIconNode || !GetAttributeValue(pIconNode, "src", iconPath))
-      entry.SetIconPath("");
-    else
-      entry.SetIconPath(iconPath);
-
-    channelEpg->GetEpgEntries().push_back(entry);
   }
 
   xmlDoc.clear();
@@ -463,22 +342,10 @@ bool Epg::LoadGenres()
 
   for (xml_node<>* pGenreNode = pRootElement->first_node("genre"); pGenreNode; pGenreNode = pGenreNode->next_sibling("genre"))
   {
-    std::string buff;
-    if (!GetAttributeValue(pGenreNode, "type", buff))
-      continue;
-
-    if (!StringUtils::IsNaturalNumber(buff))
-      continue;
-
     EpgGenre genre;
-    genre.SetGenreString(pGenreNode->value());
-    genre.SetGenreType(atoi(buff.c_str()));
-    genre.SetGenreSubType(0);
 
-    if (GetAttributeValue(pGenreNode, "subtype", buff) && StringUtils::IsNaturalNumber(buff))
-      genre.SetGenreSubType(atoi(buff.c_str()));
-
-    m_genres.push_back(genre);
+    if (genre.UpdateFrom(pGenreNode))
+      m_genres.push_back(genre);
   }
 
   xmlDoc.clear();

@@ -21,6 +21,8 @@
  *
  */
 
+#include "rapidxml/rapidxml.hpp"
+
 #include <string>
 
 namespace iptvsimple
@@ -38,6 +40,8 @@ namespace iptvsimple
 
       const std::string& GetGenreString() const { return m_genreString; }
       void SetGenreString(const std::string& value) { m_genreString = value; }
+
+      bool UpdateFrom(rapidxml::xml_node<>* pGenreNode);
 
     private:
       int m_genreType;
