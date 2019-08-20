@@ -45,8 +45,8 @@ using namespace iptvsimple::utilities;
 #endif
 #endif
 
-bool m_bCreated = false;
-ADDON_STATUS m_CurStatus = ADDON_STATUS_UNKNOWN;
+bool m_created = false;
+ADDON_STATUS m_currentStatus = ADDON_STATUS_UNKNOWN;
 PVRIptvData* m_data = nullptr;
 Channel m_currentChannel;
 Settings& settings = Settings::GetInstance();
@@ -113,7 +113,7 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
 
   Logger::Log(LogLevel::LEVEL_INFO, "%s Creating the PVR IPTV Simple add-on", __FUNCTION__);
 
-  m_CurStatus = ADDON_STATUS_UNKNOWN;
+  m_currentStatus = ADDON_STATUS_UNKNOWN;
   const std::string userPath = pvrprops->strUserPath;
   const std::string clientPath = pvrprops->strClientPath;
 
@@ -123,22 +123,22 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   settings.ReadFromAddon(userPath, clientPath);
 
   m_data = new PVRIptvData;
-  m_CurStatus = ADDON_STATUS_OK;
-  m_bCreated = true;
+  m_currentStatus = ADDON_STATUS_OK;
+  m_created = true;
 
-  return m_CurStatus;
+  return m_currentStatus;
 }
 
 ADDON_STATUS ADDON_GetStatus()
 {
-  return m_CurStatus;
+  return m_currentStatus;
 }
 
 void ADDON_Destroy()
 {
   delete m_data;
-  m_bCreated = false;
-  m_CurStatus = ADDON_STATUS_UNKNOWN;
+  m_created = false;
+  m_currentStatus = ADDON_STATUS_UNKNOWN;
 }
 
 ADDON_STATUS ADDON_SetSetting(const char* settingName, const void* settingValue)

@@ -125,13 +125,13 @@ void Channels::ApplyChannelLogos()
   }
 }
 
-void Channels::ReapplyChannelLogos(const char* strNewPath)
+void Channels::ReapplyChannelLogos(const char* newLogoPath)
 {
   //P8PLATFORM::CLockObject lock(m_mutex);
   //TODO Lock should happen in calling class
-  if (strlen(strNewPath) > 0)
+  if (strlen(newLogoPath) > 0)
   {
-    m_logoPath = strNewPath;
+    m_logoPath = newLogoPath;
     ApplyChannelLogos();
 
     PVR->TriggerChannelUpdate();

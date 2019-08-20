@@ -62,17 +62,17 @@ bool Epg::LoadEPG(time_t start, time_t end)
       return false;
     }
 
-    xml_node<>* pRootElement = xmlDoc.first_node("tv");
-    if (!pRootElement)
+    xml_node<>* rootElement = xmlDoc.first_node("tv");
+    if (!rootElement)
     {
       Logger::Log(LEVEL_ERROR, "Invalid EPG XML: no <tv> tag found");
       return false;
     }
 
-    if (!LoadChannelEpgs(pRootElement))
+    if (!LoadChannelEpgs(rootElement))
       return false;
 
-    LoadEpgEntries(pRootElement, start, end);
+    LoadEpgEntries(rootElement, start, end);
 
     xmlDoc.clear();
   }
