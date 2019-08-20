@@ -1,3 +1,9 @@
+v4.3.0
+- Added: Auto reload channels, groups and EPG on settings change
+- Added: Support for #EXTGRP tag in M3U file
+- Fixed: Channel with no groups inherit previous channels groups
+- Added: Add appveyor.yml
+
 v4.2.1
 - Fix nullptr initialisation
 
