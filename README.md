@@ -55,33 +55,33 @@ In Kodi 18.2 the level of settings shown will correspond to the level set in the
 General settings required for the addon to function.
 
 * **Location**: Select where to find the M3U resource. The options are:
-    - `Local path (include local network)` - A path to an M3U file whether it be on the device or the local network.
-    - `Remote path (Internet address)` - A URL specifying the location of the M3U file.
-* **M3U play list path**: If location is `Local path (include local network)` this setting must contain a valid path for the addon to function.
-* **M3U play list URL**: If location is `Remote path (Internet address)` this setting must contain a valid URL for the addon to function.
-* **Cache M3U at local storage**: If location is `Remote path (Internet address)` select whether or not the the M3U file should be cached locally.
+    - `Local path` - A path to an M3U file whether it be on the device or the local network.
+    - `Remote path` - A URL specifying the location of the M3U file.
+* **M3U play list path**: If location is `Local path` this setting must contain a valid path for the addon to function.
+* **M3U play list URL**: If location is `Remote path` this setting must contain a valid URL for the addon to function.
+* **Cache M3U at local storage**: If location is `Remote path` select whether or not the the M3U file should be cached locally.
 * **Start channel number**: The number to start numbering channels from.
 
 ### EPG Settings
 Settings related to the EPG.
 
 * **Location**: Select where to find the XMLTV resource. The options are:
-    - `Local path (include local network)` - A path to an XMLTV file whether it be on the device or the local network.
-    - `Remote path (Internet address)` - A URL specifying the location of the XMLTV file.
-* **XMLTV path**: If location is `Local Path (include local network)` this setting should contain a valid path.
-* **XMLTV URL**: If location is `Remote Path (Internet address)` this setting should contain a valid URL.
-* **Cache XMLTV at local storage**: If location is `Remote path (Internet address)` select whether or not the the XMLTV file should be cached locally.
+    - `Local path` - A path to an XMLTV file whether it be on the device or the local network.
+    - `Remote path` - A URL specifying the location of the XMLTV file.
+* **XMLTV path**: If location is `Local Path` this setting should contain a valid path.
+* **XMLTV URL**: If location is `Remote Path` this setting should contain a valid URL.
+* **Cache XMLTV at local storage**: If location is `Remote path` select whether or not the the XMLTV file should be cached locally.
 * **EPG time shift**: Adjust the EPG times by this value in minutes, range is from -720 mins to +720 mins (+/- 12 hours).
-* **Apply time shift to all channels**: Whether or not to apply time shift to all channels.
+* **Apply time shift to all channels**: Whether or not to override the time shift for all channels with `EPG time shift`. If not enabled `EPG time shift` plus the individual time shift per channel (if available) will be used.
 
 ### Channel Logos
 Settings realted to Channel Logos.
 
 * **Location**: Select where to find the channel logos. The options are:
-    - `Local path (include local network)` - A path to a folder whether it be on the device or the local network.
-    - `Remote path (Internet address)` - A base URL specifying the location of the logos.
-* **Channel logos folder**: If location is `Local Path (include local network)` this setting should contain a valid folder.
-* **Channel logos base URL**: If location is `Remote Path (Internet address)` this setting should contain a valid base URL.
+    - `Local path` - A path to a folder whether it be on the device or the local network.
+    - `Remote path ` - A base URL specifying the location of the logos.
+* **Channel logos folder**: If location is `Local Path` this setting should contain a valid folder.
+* **Channel logos base URL**: If location is `Remote Path` this setting should contain a valid base URL.
 * **Channel logos from XMLTV**: Preference on how to handle channel logos. The options are:
     - `Ignore` - Don't use channel logos from an XMLTV file.
     - `Prefer M3U` - Use the channel logo from the M3U if available otherwise use the XMLTV logo.
