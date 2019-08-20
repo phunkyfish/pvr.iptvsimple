@@ -116,7 +116,7 @@ long long ParseDateTime(const std::string& strDate)
 } // unnamed namespace
 
 bool EpgEntry::UpdateFrom(rapidxml::xml_node<>* channelNode, ChannelEpg* channelEpg, const std::string& id, int broadcastId,
-                          int start, int end, int maxShiftTime, int minShiftTime)
+                          int start, int end, int minShiftTime, int maxShiftTime)
 {
   std::string strStart, strStop;
   if (!GetAttributeValue(channelNode, "start", strStart) || !GetAttributeValue(channelNode, "stop", strStop))

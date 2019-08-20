@@ -35,6 +35,13 @@ namespace iptvsimple
   static const int SECONDS_IN_DAY = 86400;
   static const std::string GENRES_MAP_FILENAME = "genres.xml";
 
+  enum class XmltvFileFormat
+  {
+    NORMAL,
+    TAR_ARCHIVE,
+    INVALID
+  };
+
   class Epg
   {
   public:
@@ -44,12 +51,19 @@ namespace iptvsimple
     void Clear();
 
   private:
+    static const XmltvFileFormat GetXMLTVFileFormat(const char* buffer);
+
     bool LoadEPG(time_t iStart, time_t iEnd);
+    bool GetXMLTVFileWithRetries(std::string& data);
+    char* FillBufferFromXMLTVData(std::string& data);
+    bool LoadChannelEpgs(rapidxml::xml_node<>* rootElement);
+    void LoadEpgEntries(rapidxml::xml_node<>* rootElement, int start, int end);
+    bool LoadGenres();
     void ReloadEPG(const char* newPath);
+
     data::ChannelEpg* FindEpgForChannel(const std::string& id);
     data::ChannelEpg* FindEpgForChannel(const data::Channel& channel);
     void ApplyChannelsLogosFromEPG();
-    bool LoadGenres();
 
     std::string m_xmltvUrl;
     int m_epgTimeShift;

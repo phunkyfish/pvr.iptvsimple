@@ -43,10 +43,59 @@ bool Epg::LoadEPG(time_t start, time_t end)
   }
 
   std::string data;
-  std::string decompressed;
-  int bytesRead = 0;
 
+  if (GetXMLTVFileWithRetries(data))
+  {
+    char* buffer = FillBufferFromXMLTVData(data);
+
+    if (!buffer)
+      return false;
+
+    xml_document<> xmlDoc;
+    try
+    {
+      xmlDoc.parse<0>(buffer);
+    }
+    catch (parse_error p)
+    {
+      Logger::Log(LEVEL_ERROR, "Unable parse EPG XML: %s", p.what());
+      return false;
+    }
+
+    xml_node<>* pRootElement = xmlDoc.first_node("tv");
+    if (!pRootElement)
+    {
+      Logger::Log(LEVEL_ERROR, "Invalid EPG XML: no <tv> tag found");
+      return false;
+    }
+
+    if (!LoadChannelEpgs(pRootElement))
+      return false;
+
+    LoadEpgEntries(pRootElement, start, end);
+
+    xmlDoc.clear();
+  }
+  else
+  {
+    return false;
+  }
+
+  LoadGenres();
+
+  Logger::Log(LEVEL_NOTICE, "EPG Loaded.");
+
+  if (Settings::GetInstance().GetEpgLogos() > 0)
+    ApplyChannelsLogosFromEPG();
+
+  return true;
+}
+
+bool Epg::GetXMLTVFileWithRetries(std::string& data)
+{
+  int bytesRead = 0;
   int count = 0;
+
   while (count < 3) // max 3 tries
   {
     if ((bytesRead = FileUtils::GetCachedFileContents(Settings::GetInstance().GetUserPath(), TVG_FILE_NAME, m_xmltvUrl, data, Settings::GetInstance().UseEPGCache())) != 0)
@@ -64,7 +113,13 @@ bool Epg::LoadEPG(time_t start, time_t end)
     return false;
   }
 
-  char* buffer;
+  return true;
+}
+
+char* Epg::FillBufferFromXMLTVData(std::string& data)
+{
+  std::string decompressed;
+  char* buffer = nullptr;
 
   // gzip packed
   if (data[0] == '\x1F' && data[1] == '\x8B' && data[2] == '\x08')
@@ -72,13 +127,29 @@ bool Epg::LoadEPG(time_t start, time_t end)
     if (!FileUtils::GzipInflate(data, decompressed))
     {
       Logger::Log(LEVEL_ERROR, "Invalid EPG file '%s': unable to decompress file.", m_xmltvUrl.c_str());
-      return false;
+      return nullptr;
     }
     buffer = &(decompressed[0]);
   }
   else
     buffer = &(data[0]);
 
+  XmltvFileFormat fileFormat = GetXMLTVFileFormat(buffer);
+
+  if (fileFormat == XmltvFileFormat::INVALID)
+  {
+    Logger::Log(LEVEL_ERROR, "Invalid EPG file '%s': unable to parse file.", m_xmltvUrl.c_str());
+    return nullptr;
+  }
+
+  if (fileFormat == XmltvFileFormat::TAR_ARCHIVE)
+    buffer += 0x200; // RECORDSIZE = 512
+
+  return buffer;
+}
+
+const XmltvFileFormat Epg::GetXMLTVFileFormat(const char* buffer)
+{
   // xml should starts with '<?xml'
   if (buffer[0] != '\x3C' || buffer[1] != '\x3F' || buffer[2] != '\x78' ||
       buffer[3] != '\x6D' || buffer[4] != '\x6C')
@@ -88,44 +159,25 @@ bool Epg::LoadEPG(time_t start, time_t end)
     {
       // check for tar archive
       if (strcmp(buffer + 0x101, "ustar") || strcmp(buffer + 0x101, "GNUtar"))
-        buffer += 0x200; // RECORDSIZE = 512
+        return XmltvFileFormat::TAR_ARCHIVE;
       else
-      {
-        Logger::Log(LEVEL_ERROR, "Invalid EPG file '%s': unable to parse file.", m_xmltvUrl.c_str());
-        return false;
-      }
+        return XmltvFileFormat::INVALID;
     }
   }
 
-  xml_document<> xmlDoc;
-  try
-  {
-    xmlDoc.parse<0>(buffer);
-  }
-  catch (parse_error p)
-  {
-    Logger::Log(LEVEL_ERROR, "Unable parse EPG XML: %s", p.what());
-    return false;
-  }
+  return XmltvFileFormat::NORMAL;
+}
 
-  xml_node<>* pRootElement = xmlDoc.first_node("tv");
-  if (!pRootElement)
-  {
-    Logger::Log(LEVEL_ERROR, "Invalid EPG XML: no <tv> tag found");
-    return false;
-  }
+bool Epg::LoadChannelEpgs(xml_node<>* rootElement)
+{
+  m_channelEpgs.clear();
 
-  // clear previously loaded epg
-  if (m_channelEpgs.size() > 0)
-    m_channelEpgs.clear();
-
-  int iBroadCastId = 0;
-  xml_node<>* pChannelNode = nullptr;
-  for (pChannelNode = pRootElement->first_node("channel"); pChannelNode; pChannelNode = pChannelNode->next_sibling("channel"))
+  xml_node<>* channelNode = nullptr;
+  for (channelNode = rootElement->first_node("channel"); channelNode; channelNode = channelNode->next_sibling("channel"))
   {
     ChannelEpg channelEpg;
 
-    if (channelEpg.UpdateFrom(pChannelNode, m_channels))
+    if (channelEpg.UpdateFrom(channelNode, m_channels))
       m_channelEpgs.push_back(channelEpg);
   }
 
@@ -135,6 +187,11 @@ bool Epg::LoadEPG(time_t start, time_t end)
     return false;
   }
 
+  return true;
+}
+
+void Epg::LoadEpgEntries(xml_node<>* rootElement, int start, int end)
+{
   int minShiftTime = m_epgTimeShift;
   int maxShiftTime = m_epgTimeShift;
   if (!m_tsOverride)
@@ -151,11 +208,14 @@ bool Epg::LoadEPG(time_t start, time_t end)
     }
   }
 
+  xml_node<>* channelNode = nullptr;
   ChannelEpg* channelEpg = nullptr;
-  for (pChannelNode = pRootElement->first_node("programme"); pChannelNode; pChannelNode = pChannelNode->next_sibling("programme"))
+  int broadcastId = 0;
+
+  for (channelNode = rootElement->first_node("programme"); channelNode; channelNode = channelNode->next_sibling("programme"))
   {
     std::string id;
-    if (!GetAttributeValue(pChannelNode, "channel", id))
+    if (!GetAttributeValue(channelNode, "channel", id))
       continue;
 
     if (!channelEpg || StringUtils::CompareNoCase(channelEpg->GetId(), id) != 0)
@@ -165,24 +225,15 @@ bool Epg::LoadEPG(time_t start, time_t end)
     }
 
     EpgEntry entry;
-    if (entry.UpdateFrom(pChannelNode, channelEpg, id, iBroadCastId + 1, start, end, maxShiftTime, minShiftTime))
+    if (entry.UpdateFrom(channelNode, channelEpg, id, broadcastId + 1, start, end, minShiftTime, maxShiftTime))
     {
-      iBroadCastId++;
+      broadcastId++;
 
       channelEpg->GetEpgEntries().push_back(entry);
     }
   }
-
-  xmlDoc.clear();
-  LoadGenres();
-
-  Logger::Log(LEVEL_NOTICE, "EPG Loaded.");
-
-  if (Settings::GetInstance().GetEpgLogos() > 0)
-    ApplyChannelsLogosFromEPG();
-
-  return true;
 }
+
 
 void Epg::ReloadEPG(const char* newPath)
 {
