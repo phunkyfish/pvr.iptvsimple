@@ -33,6 +33,15 @@ namespace iptvsimple
     class Channel
     {
     public:
+      Channel() = default;
+      Channel(const Channel &c) : m_radio(c.IsRadio()), m_uniqueId(c.GetUniqueId()),
+        m_channelNumber(c.GetChannelNumber()), m_encryptionSystem(c.GetEncryptionSystem()),
+        m_tvgShift(c.GetTvgShift()), m_channelName(c.GetChannelName()), m_logoPath(c.GetLogoPath()),
+        m_streamURL(c.GetStreamURL()), m_tvgId(c.GetTvgId()),
+        m_tvgName(c.GetTvgName()), m_tvgLogo(c.GetTvgLogo()),
+        m_properties(c.GetProperties()) {};
+      ~Channel() = default;
+
       bool IsRadio() const { return m_radio; }
       void SetRadio(bool value) { m_radio = value; }
 
@@ -66,8 +75,9 @@ namespace iptvsimple
       const std::string& GetTvgLogo() const { return m_tvgLogo; }
       void SetTvgLogo(const std::string& value) { m_tvgLogo = value; }
 
-      std::map<std::string, std::string>& GetProperties() { return m_properties; }
+      const std::map<std::string, std::string>& GetProperties() const { return m_properties; }
       void SetProperties(std::map<std::string, std::string>& value) { m_properties = value; }
+      void AddProperty(const std::string& prop, const std::string& value) { m_properties.insert({prop, value}); }
 
       void UpdateTo(Channel& left) const;
       void UpdateTo(PVR_CHANNEL& left) const;

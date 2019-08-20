@@ -108,10 +108,9 @@ bool PlaylistLoader::LoadPlayList(void)
       Logger::Log(LEVEL_DEBUG, "Found URL: '%s' (current channel name: '%s')", line.c_str(), tmpChannel.GetChannelName().c_str());
 
       if (isRealTime)
-        tmpChannel.GetProperties().insert({PVR_STREAM_PROPERTY_ISREALTIMESTREAM, "true"});
+        tmpChannel.AddProperty(PVR_STREAM_PROPERTY_ISREALTIMESTREAM, "true");
 
-      Channel channel;
-      tmpChannel.UpdateTo(channel);
+      Channel channel(tmpChannel);
       channel.SetStreamURL(line);
 
       m_channels.AddChannel(channel, currentChannelGroupIdList, m_channelGroups);
@@ -190,7 +189,7 @@ std::string PlaylistLoader::ParseIntoChannel(const std::string& line, Channel& c
 
 void PlaylistLoader::ParseAndAddChannelGroups(const std::string& groupNamesListString, std::vector<int>& groupIdList, bool isRadio)
 {
-  //groupListString may have a single or multiple group names
+  //groupNamesListString may have a single or multiple group names seapareted by ';'
 
   std::stringstream streamGroups(groupNamesListString);
   std::string groupName;
@@ -216,7 +215,7 @@ void PlaylistLoader::ParseSinglePropertyIntoChannel(const std::string& line, Cha
   {
     const std::string prop = value.substr(0, pos);
     const std::string propValue = value.substr(pos + 1);
-    channel.GetProperties().insert({prop, propValue});
+    channel.AddProperty(prop, propValue);
 
     Logger::Log(LEVEL_DEBUG, "%s - Found %s property: '%s' value: '%s'", __FUNCTION__, markerName.c_str(), prop.c_str(), propValue.c_str());
   }
