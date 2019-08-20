@@ -53,8 +53,11 @@ namespace iptvsimple
     void ReloadPlayList(const char* strNewPath);
 
   private:
-    std::string ReadMarkerValue(const std::string& line, const std::string& markerName);
-    int GetChannelId(const char* channelName, const char* streamUrl);
+    static std::string ReadMarkerValue(const std::string& line, const std::string& markerName);
+    static void ParseSinglePropertyIntoChannel(const std::string& line, iptvsimple::data::Channel& channel, const std::string& markerName);
+
+    std::string ParseIntoChannel(const std::string& line, iptvsimple::data::Channel& channel, std::vector<int>& groupIdList, int epgTimeShift);
+    void ParseAndAddChannelGroups(const std::string& groupNamesListString, std::vector<int>& groupIdList, bool isRadio);
 
     std::string m_m3uUrl;
 

@@ -28,7 +28,7 @@ void ChannelGroups::GetChannelGroups(std::vector<PVR_CHANNEL_GROUP>& kodiChannel
 
   for (const auto& channelGroup : m_channelGroups)
   {
-    Logger::Log(LEVEL_DEBUG, "%s - Transfer channelGroup '%s', ChannelGroupIndex '%d'", __FUNCTION__, channelGroup.GetGroupName().c_str(), channelGroup.GetGroupId());
+    Logger::Log(LEVEL_DEBUG, "%s - Transfer channelGroup '%s', ChannelGroupIndex '%d'", __FUNCTION__, channelGroup.GetGroupName().c_str(), channelGroup.GetUniqueId());
 
     if (channelGroup.IsRadio() == radio)
     {
@@ -53,7 +53,7 @@ PVR_ERROR ChannelGroups::GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_C
       if ((memberId) < 0 || (memberId) >= static_cast<int>(m_channels.GetChannelsAmount()))
         continue;
 
-      Channel& channel = m_channels.GetChannelsList().at(memberId);
+      const Channel& channel = m_channels.GetChannelsList().at(memberId);
       PVR_CHANNEL_GROUP_MEMBER xbmcGroupMember;
       memset(&xbmcGroupMember, 0, sizeof(PVR_CHANNEL_GROUP_MEMBER));
 
@@ -66,6 +66,37 @@ PVR_ERROR ChannelGroups::GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_C
   }
 
   return PVR_ERROR_NO_ERROR;
+}
+
+int ChannelGroups::AddChannelGroup(iptvsimple::data::ChannelGroup& channelGroup)
+{
+  const ChannelGroup* existingChannelGroup = FindChannelGroup(channelGroup.GetGroupName());
+
+  if (!existingChannelGroup)
+  {
+    channelGroup.SetUniqueId(m_channelGroups.size() + 1);
+
+    m_channelGroups.emplace_back(channelGroup);
+
+    Logger::Log(LEVEL_DEBUG, "%s - Added group: %s, with uniqueId: %d", __FUNCTION__, channelGroup.GetGroupName().c_str(), channelGroup.GetUniqueId());
+
+    return channelGroup.GetUniqueId();
+  }
+
+  Logger::Log(LEVEL_DEBUG, "%s - Did not add group: %s, as it already exists with uniqueId: %d", __FUNCTION__, existingChannelGroup->GetGroupName().c_str(), existingChannelGroup->GetUniqueId());
+
+  return existingChannelGroup->GetUniqueId();
+}
+
+ChannelGroup* ChannelGroups::GetChannelGroup(int uniqueId)
+{
+  for (auto& myChannelGroup : m_channelGroups)
+  {
+    if (myChannelGroup.GetUniqueId() == uniqueId)
+      return &myChannelGroup;
+  }
+
+  return nullptr;
 }
 
 ChannelGroup* ChannelGroups::FindChannelGroup(const std::string& name)

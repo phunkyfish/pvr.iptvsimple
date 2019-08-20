@@ -1,6 +1,7 @@
 #include "Channels.h"
 
 #include "../client.h"
+#include "ChannelGroups.h"
 #include "Settings.h"
 #include "utilities/FileUtils.h"
 #include "utilities/Logger.h"
@@ -14,11 +15,14 @@ using namespace iptvsimple::utilities;
 Channels::Channels()
 {
   m_logoPath = Settings::GetInstance().GetLogoPath();
+  m_currentChannelNumber = Settings::GetInstance().GetStartNumber();
 }
 
 void Channels::Clear()
 {
   m_channels.clear();
+  m_logoPath = Settings::GetInstance().GetLogoPath();
+  m_currentChannelNumber = Settings::GetInstance().GetStartNumber();
 }
 
 int Channels::GetChannelsAmount()
@@ -56,6 +60,33 @@ bool Channels::GetChannel(const PVR_CHANNEL& channel, Channel& myChannel)
   }
 
   return false;
+}
+
+void Channels::AddChannel(Channel& channel, std::vector<int>& groupIdList, ChannelGroups& channelGroups)
+{
+  m_currentChannelNumber = channel.GetChannelNumber();
+  channel.SetUniqueId(GenerateChannelId(channel.GetChannelName().c_str(), channel.GetStreamURL().c_str()));
+
+  for (int myGroupId : groupIdList)
+  {
+    channel.SetRadio(channelGroups.GetChannelGroup(myGroupId)->IsRadio());
+    channelGroups.GetChannelGroup(myGroupId)->GetMemberChannels().push_back(m_channels.size());
+  }
+
+  m_channels.emplace_back(channel);
+
+  m_currentChannelNumber++;
+}
+
+Channel* Channels::GetChannel(int uniqueId)
+{
+  for (auto& myChannel : m_channels)
+  {
+    if (myChannel.GetUniqueId() == uniqueId)
+      return &myChannel;
+  }
+
+  return nullptr;
 }
 
 const Channel* Channels::FindChannel(const std::string& id, const std::string& name) const
@@ -106,4 +137,18 @@ void Channels::ReapplyChannelLogos(const char* strNewPath)
     PVR->TriggerChannelUpdate();
     PVR->TriggerChannelGroupsUpdate();
   }
+}
+
+int Channels::GenerateChannelId(const char* channelName, const char* streamUrl)
+{
+  std::string concat(channelName);
+  concat.append(streamUrl);
+
+  const char* calcString = concat.c_str();
+  int iId = 0;
+  int c;
+  while ((c = *calcString++))
+    iId = ((iId << 5) + iId) + c; /* iId * 33 + c */
+
+  return abs(iId);
 }

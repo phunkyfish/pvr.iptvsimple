@@ -36,8 +36,8 @@ namespace iptvsimple
       bool IsRadio() const { return m_radio; }
       void SetRadio(bool value) { m_radio = value; }
 
-      int GetGroupId() const { return m_groupId; }
-      void SetGroupId(int value) { m_groupId = value; }
+      int GetUniqueId() const { return m_uniqueId; }
+      void SetUniqueId(int value) { m_uniqueId = value; }
 
       const std::string& GetGroupName() const { return m_groupName; }
       void SetGroupName(const std::string& value) { m_groupName = value; }
@@ -48,7 +48,7 @@ namespace iptvsimple
 
     private:
       bool m_radio;
-      int m_groupId;
+      int m_uniqueId;
       std::string m_groupName;
       std::vector<int> m_memberChannels;
     };

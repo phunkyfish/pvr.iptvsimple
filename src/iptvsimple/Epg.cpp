@@ -282,7 +282,7 @@ void Epg::ApplyChannelsLogosFromEPG()
 {
   bool updated = false;
 
-  for (auto& channel : m_channels.GetChannelsList())
+  for (const auto& channel : m_channels.GetChannelsList())
   {
     const ChannelEpg* channelEpg = FindEpgForChannel(channel);
     if (!channelEpg || channelEpg->GetIcon().empty())
@@ -295,7 +295,7 @@ void Epg::ApplyChannelsLogosFromEPG()
     // 2 - prefer logo from epg
     if (!channelEpg->GetIcon().empty() && Settings::GetInstance().GetEpgLogos() == 2)
     {
-      channel.SetLogoPath(channelEpg->GetIcon());
+      m_channels.GetChannel(channel.GetUniqueId())->SetLogoPath(channelEpg->GetIcon());
       updated = true;
     }
   }

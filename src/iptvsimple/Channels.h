@@ -30,6 +30,13 @@
 
 namespace iptvsimple
 {
+  class ChannelGroups;
+
+  namespace data
+  {
+    class ChannelGroup;
+  }
+
   class Channels
   {
   public:
@@ -39,14 +46,21 @@ namespace iptvsimple
     void GetChannels(std::vector<PVR_CHANNEL>& kodiChannels, bool radio) const;
     bool GetChannel(const PVR_CHANNEL& channel, iptvsimple::data::Channel& myChannel);
 
+    void AddChannel(iptvsimple::data::Channel& channel, std::vector<int>& groupIdList, iptvsimple::ChannelGroups& channelGroups);
+    iptvsimple::data::Channel* GetChannel(int uniqueId);
     const iptvsimple::data::Channel* FindChannel(const std::string& id, const std::string& name) const;
-    std::vector<data::Channel>& GetChannelsList() { return m_channels; }
+    const std::vector<data::Channel>& GetChannelsList() const { return m_channels; }
     void ReapplyChannelLogos(const char* strNewPath);
     void Clear();
     void ApplyChannelLogos();
 
+    int GetCurrentChannelNumber() const { return m_currentChannelNumber; }
+
   private:
+    int GenerateChannelId(const char* channelName, const char* streamUrl);
+
     std::string m_logoPath;
+    int m_currentChannelNumber;
 
     std::vector<iptvsimple::data::Channel> m_channels;
   };
