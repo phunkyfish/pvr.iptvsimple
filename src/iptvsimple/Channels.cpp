@@ -14,15 +14,15 @@ using namespace iptvsimple::utilities;
 
 Channels::Channels()
 {
-  m_logoPath = Settings::GetInstance().GetLogoPath();
-  m_currentChannelNumber = Settings::GetInstance().GetStartNumber();
+  m_logoLocation = Settings::GetInstance().GetLogoLocation();
+  m_currentChannelNumber = Settings::GetInstance().GetStartChannelNumber();
 }
 
 void Channels::Clear()
 {
   m_channels.clear();
-  m_logoPath = Settings::GetInstance().GetLogoPath();
-  m_currentChannelNumber = Settings::GetInstance().GetStartNumber();
+  m_logoLocation = Settings::GetInstance().GetLogoLocation();
+  m_currentChannelNumber = Settings::GetInstance().GetStartChannelNumber();
 }
 
 int Channels::GetChannelsAmount()
@@ -117,8 +117,8 @@ void Channels::ApplyChannelLogos()
   {
     if (!channel.GetTvgLogo().empty())
     {
-      if (!m_logoPath.empty() && channel.GetTvgLogo().find("://") == std::string::npos) // special proto
-        channel.SetLogoPath(FileUtils::PathCombine(m_logoPath, channel.GetTvgLogo()));
+      if (!m_logoLocation.empty() && channel.GetTvgLogo().find("://") == std::string::npos) // special proto
+        channel.SetLogoPath(FileUtils::PathCombine(m_logoLocation, channel.GetTvgLogo()));
       else
         channel.SetLogoPath(channel.GetTvgLogo());
     }
@@ -131,7 +131,7 @@ void Channels::ReapplyChannelLogos(const char* newLogoPath)
   //TODO Lock should happen in calling class
   if (strlen(newLogoPath) > 0)
   {
-    m_logoPath = newLogoPath;
+    m_logoLocation = newLogoPath;
     ApplyChannelLogos();
 
     PVR->TriggerChannelUpdate();

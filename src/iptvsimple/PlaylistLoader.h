@@ -59,7 +59,7 @@ namespace iptvsimple
     std::string ParseIntoChannel(const std::string& line, iptvsimple::data::Channel& channel, std::vector<int>& groupIdList, int epgTimeShift);
     void ParseAndAddChannelGroups(const std::string& groupNamesListString, std::vector<int>& groupIdList, bool isRadio);
 
-    std::string m_m3uUrl;
+    std::string m_m3uLocation;
 
     iptvsimple::ChannelGroups& m_channelGroups;
     iptvsimple::Channels& m_channels;

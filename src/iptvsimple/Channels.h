@@ -59,7 +59,7 @@ namespace iptvsimple
   private:
     int GenerateChannelId(const char* channelName, const char* streamUrl);
 
-    std::string m_logoPath;
+    std::string m_logoLocation;
     int m_currentChannelNumber;
 
     std::vector<iptvsimple::data::Channel> m_channels;

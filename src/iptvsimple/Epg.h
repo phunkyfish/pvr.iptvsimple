@@ -65,7 +65,7 @@ namespace iptvsimple
     data::ChannelEpg* FindEpgForChannel(const data::Channel& channel);
     void ApplyChannelsLogosFromEPG();
 
-    std::string m_xmltvUrl;
+    std::string m_xmltvLocation;
     int m_epgTimeShift;
     bool m_tsOverride;
     int m_lastStart;

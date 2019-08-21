@@ -21,8 +21,8 @@ using namespace rapidxml;
 Epg::Epg(Channels& channels)
       : m_channels(channels)
 {
-  m_xmltvUrl = Settings::GetInstance().GetTvgPath();
-  m_epgTimeShift = Settings::GetInstance().GetEpgTimeshift();
+  m_xmltvLocation = Settings::GetInstance().GetEpgLocation();
+  m_epgTimeShift = Settings::GetInstance().GetEpgTimeshiftSecs();
   m_tsOverride = Settings::GetInstance().GetTsOverride();
   m_lastStart = 0;
   m_lastEnd = 0;
@@ -36,7 +36,7 @@ void Epg::Clear()
 
 bool Epg::LoadEPG(time_t start, time_t end)
 {
-  if (m_xmltvUrl.empty())
+  if (m_xmltvLocation.empty())
   {
     Logger::Log(LEVEL_NOTICE, "EPG file path is not configured. EPG not loaded.");
     return false;
@@ -85,7 +85,7 @@ bool Epg::LoadEPG(time_t start, time_t end)
 
   Logger::Log(LEVEL_NOTICE, "EPG Loaded.");
 
-  if (Settings::GetInstance().GetEpgLogos() > 0)
+  if (Settings::GetInstance().GetEpgLogosMode() != EpgLogosMode::IGNORE)
     ApplyChannelsLogosFromEPG();
 
   return true;
@@ -98,10 +98,10 @@ bool Epg::GetXMLTVFileWithRetries(std::string& data)
 
   while (count < 3) // max 3 tries
   {
-    if ((bytesRead = FileUtils::GetCachedFileContents(Settings::GetInstance().GetUserPath(), TVG_FILE_NAME, m_xmltvUrl, data, Settings::GetInstance().UseEPGCache())) != 0)
+    if ((bytesRead = FileUtils::GetCachedFileContents(Settings::GetInstance().GetUserPath(), TVG_FILE_NAME, m_xmltvLocation, data, Settings::GetInstance().UseEPGCache())) != 0)
       break;
 
-    Logger::Log(LEVEL_ERROR, "Unable to load EPG file '%s':  file is missing or empty. :%dth try.", m_xmltvUrl.c_str(), ++count);
+    Logger::Log(LEVEL_ERROR, "Unable to load EPG file '%s':  file is missing or empty. :%dth try.", m_xmltvLocation.c_str(), ++count);
 
     if (count < 3)
       std::this_thread::sleep_for(std::chrono::microseconds(2 * 1000 * 1000)); // sleep 2 sec before next try.
@@ -109,7 +109,7 @@ bool Epg::GetXMLTVFileWithRetries(std::string& data)
 
   if (bytesRead == 0)
   {
-    Logger::Log(LEVEL_ERROR, "Unable to load EPG file '%s':  file is missing or empty. After %d tries.", m_xmltvUrl.c_str(), count);
+    Logger::Log(LEVEL_ERROR, "Unable to load EPG file '%s':  file is missing or empty. After %d tries.", m_xmltvLocation.c_str(), count);
     return false;
   }
 
@@ -126,7 +126,7 @@ char* Epg::FillBufferFromXMLTVData(std::string& data)
   {
     if (!FileUtils::GzipInflate(data, decompressed))
     {
-      Logger::Log(LEVEL_ERROR, "Invalid EPG file '%s': unable to decompress file.", m_xmltvUrl.c_str());
+      Logger::Log(LEVEL_ERROR, "Invalid EPG file '%s': unable to decompress file.", m_xmltvLocation.c_str());
       return nullptr;
     }
     buffer = &(decompressed[0]);
@@ -138,7 +138,7 @@ char* Epg::FillBufferFromXMLTVData(std::string& data)
 
   if (fileFormat == XmltvFileFormat::INVALID)
   {
-    Logger::Log(LEVEL_ERROR, "Invalid EPG file '%s': unable to parse file.", m_xmltvUrl.c_str());
+    Logger::Log(LEVEL_ERROR, "Invalid EPG file '%s': unable to parse file.", m_xmltvLocation.c_str());
     return nullptr;
   }
 
@@ -239,9 +239,9 @@ void Epg::ReloadEPG(const char* newPath)
 {
   //P8PLATFORM::CLockObject lock(m_mutex);
   //TODO Lock should happen in calling class
-  if (newPath != m_xmltvUrl)
+  if (newPath != m_xmltvLocation)
   {
-    m_xmltvUrl = newPath;
+    m_xmltvLocation = newPath;
     Clear();
 
     if (LoadEPG(m_lastStart, m_lastEnd))
@@ -340,11 +340,11 @@ void Epg::ApplyChannelsLogosFromEPG()
       continue;
 
     // 1 - prefer logo from playlist
-    if (!channel.GetLogoPath().empty() && Settings::GetInstance().GetEpgLogos() == 1)
+    if (!channel.GetLogoPath().empty() && Settings::GetInstance().GetEpgLogosMode() == EpgLogosMode::PREFER_M3U)
       continue;
 
     // 2 - prefer logo from epg
-    if (!channelEpg->GetIcon().empty() && Settings::GetInstance().GetEpgLogos() == 2)
+    if (!channelEpg->GetIcon().empty() && Settings::GetInstance().GetEpgLogosMode() == EpgLogosMode::PREFER_XMLTV)
     {
       m_channels.GetChannel(channel.GetUniqueId())->SetLogoPath(channelEpg->GetIcon());
       updated = true;

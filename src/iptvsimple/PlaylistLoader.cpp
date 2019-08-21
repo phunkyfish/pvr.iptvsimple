@@ -19,21 +19,21 @@ using namespace iptvsimple::utilities;
 PlaylistLoader::PlaylistLoader(Channels& channels, ChannelGroups& channelGroups)
       : m_channels(channels), m_channelGroups(channelGroups)
 {
-  m_m3uUrl = Settings::GetInstance().GetM3UPath();
+  m_m3uLocation = Settings::GetInstance().GetM3ULocation();
 }
 
 bool PlaylistLoader::LoadPlayList(void)
 {
-  if (m_m3uUrl.empty())
+  if (m_m3uLocation.empty())
   {
     Logger::Log(LEVEL_NOTICE, "Playlist file path is not configured. Channels not loaded.");
     return false;
   }
 
   std::string playlistContent;
-  if (!FileUtils::GetCachedFileContents(Settings::GetInstance().GetUserPath(), M3U_FILE_NAME, m_m3uUrl, playlistContent, Settings::GetInstance().UseM3UCache()))
+  if (!FileUtils::GetCachedFileContents(Settings::GetInstance().GetUserPath(), M3U_FILE_NAME, m_m3uLocation, playlistContent, Settings::GetInstance().UseM3UCache()))
   {
-    Logger::Log(LEVEL_ERROR, "Unable to load playlist file '%s':  file is missing or empty.", m_m3uUrl.c_str());
+    Logger::Log(LEVEL_ERROR, "Unable to load playlist file '%s':  file is missing or empty.", m_m3uLocation.c_str());
     return false;
   }
 
@@ -74,7 +74,7 @@ bool PlaylistLoader::LoadPlayList(void)
       else
       {
         Logger::Log(LEVEL_ERROR, "URL '%s' missing %s descriptor on line 1, attempting to parse it anyway.",
-                  m_m3uUrl.c_str(), M3U_START_MARKER.c_str());
+                  m_m3uLocation.c_str(), M3U_START_MARKER.c_str());
       }
     }
 
@@ -124,7 +124,7 @@ bool PlaylistLoader::LoadPlayList(void)
 
   if (m_channels.GetChannelsAmount() == 0)
   {
-    Logger::Log(LEVEL_ERROR, "Unable to load channels from file '%s':  file is corrupted.", m_m3uUrl.c_str());
+    Logger::Log(LEVEL_ERROR, "Unable to load channels from file '%s':  file is corrupted.", m_m3uLocation.c_str());
     return false;
   }
 
@@ -225,9 +225,9 @@ void PlaylistLoader::ReloadPlayList(const char* newPath)
 {
   //P8PLATFORM::CLockObject lock(m_mutex);
   //TODO Lock should happe in calling class
-  if (newPath != m_m3uUrl)
+  if (newPath != m_m3uLocation)
   {
-    m_m3uUrl = newPath;
+    m_m3uLocation = newPath;
     m_channels.Clear();
     m_channelGroups.Clear();
 

@@ -108,7 +108,7 @@
           <level>0</level>
           <default>0</default>
           <constraints>
-            <minimum>720</minimum>
+            <minimum>-720</minimum>
             <step>30</step>
             <maximum>720</maximum>
           </constraints>
@@ -172,7 +172,7 @@
             <options>
               <option label="30042">0</option> <!-- IGNORE -->
               <option label="30043">1</option> <!-- PREFER_M3U -->
-              <option label="30043">2</option> <!-- PREFER_XMLTV -->
+              <option label="30044">2</option> <!-- PREFER_XMLTV -->
             </options>
           </constraints>
           <control type="spinner" format="integer" />
