@@ -1,0 +1,1 @@
+pugixml http://mirrors.kodi.tv/build-deps/sources/pugixml-1.10.tar.gz
