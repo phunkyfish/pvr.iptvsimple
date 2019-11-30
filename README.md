@@ -142,8 +142,12 @@ Advanced settings such as multicast relays.
 
 The format specifiers are substitution based and work as follows:
 
-- `{utc}`: The start time of the program in UTC format.
+- `{utc}`: The start time of the programme in UTC format.
+- `${start}`: Same as `{utc}`.
 - `{lutc}`: Current time in UTC format.
+- `{utcend}`: The start time of the programme in UTC format + the programme duration.
+- `${end}`: Same as `{utcend}`.
+- `${duration}`: The programme duration.
 - `{Y}`: The 4-digit year (YYYY) of the start date\time.
 - `{m}`: The month (01-12) of the start date\time.
 - `{d}`: The day (01-31) of the start date\time.

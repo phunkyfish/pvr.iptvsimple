@@ -48,7 +48,7 @@ void StreamUtils::SetStreamProperty(PVR_NAMED_VALUE* properties, unsigned int* p
 
 void StreamUtils::SetAllStreamProperties(PVR_NAMED_VALUE* properties, unsigned int* propertiesCount, unsigned int propertiesMax, const iptvsimple::data::Channel& channel, const std::string& streamURL)
 {
-  if (StreamUtils::ChannelSpecifiesInputstream(channel))
+  if (ChannelSpecifiesInputstream(channel))
   {
     // Channel has an inputstream class set so we only set the stream URL
     StreamUtils::SetStreamProperty(properties, propertiesCount, propertiesMax, PVR_STREAM_PROPERTY_STREAMURL, streamURL);
@@ -69,7 +69,7 @@ void StreamUtils::SetAllStreamProperties(PVR_NAMED_VALUE* properties, unsigned i
       if (streamType == StreamType::HLS)
       {
         if (channel.IsCatchupSupported())
-          StreamUtils::SetStreamProperty(properties, propertiesCount, propertiesMax, PVR_STREAM_PROPERTY_INPUTSTREAMCLASS, "inputstream.ffmpegarchive");//m_catchupController->GetInputstreamClass(streamType));
+          StreamUtils::SetStreamProperty(properties, propertiesCount, propertiesMax, PVR_STREAM_PROPERTY_INPUTSTREAMCLASS, CATCHUP_INPUTSTREAMCLASS);
         else
           StreamUtils::SetStreamProperty(properties, propertiesCount, propertiesMax, PVR_STREAM_PROPERTY_INPUTSTREAMCLASS, PVR_STREAM_PROPERTY_VALUE_INPUTSTREAMFFMPEG);
       }
@@ -85,6 +85,39 @@ void StreamUtils::SetAllStreamProperties(PVR_NAMED_VALUE* properties, unsigned i
         StreamUtils::SetStreamProperty(properties, propertiesCount, propertiesMax, "inputstream.adaptive.manifest_update_parameter", "full");
     }
   }
+
+  if (!channel.GetProperties().empty())
+  {
+    for (auto& prop : channel.GetProperties())
+      StreamUtils::SetStreamProperty(properties, propertiesCount, propertiesMax, prop.first, prop.second);
+  }
+}
+
+std::string StreamUtils::GetEffectiveInputStreamClass(const StreamType& streamType, const iptvsimple::data::Channel& channel)
+{
+  std::string inputStreamClass = channel.GetInputStreamClass();
+
+  if (inputStreamClass.empty())
+  {
+    if (StreamUtils::UseKodiInputstreams(streamType))
+    {
+      if (streamType == StreamType::HLS)
+      {
+        if (channel.IsCatchupSupported())
+          inputStreamClass = CATCHUP_INPUTSTREAMCLASS;
+        else
+          inputStreamClass = PVR_STREAM_PROPERTY_VALUE_INPUTSTREAMFFMPEG;
+      }
+    }
+    else // inputstream.adpative
+    {
+      inputStreamClass = "inputstream.adaptive";
+    }
+  }
+
+  Logger::Log(LogLevel::LEVEL_NOTICE, "STRM Inputsreamclass: %s", inputStreamClass.c_str());
+
+  return inputStreamClass;
 }
 
 const StreamType StreamUtils::GetStreamType(const std::string& url, const Channel& channel)
@@ -209,7 +242,7 @@ bool StreamUtils::UseKodiInputstreams(const StreamType& streamType)
 
 bool StreamUtils::ChannelSpecifiesInputstream(const iptvsimple::data::Channel& channel)
 {
-  return !(channel.GetProperty(PVR_STREAM_PROPERTY_INPUTSTREAMCLASS).empty() && channel.GetProperty(PVR_STREAM_PROPERTY_INPUTSTREAMADDON).empty());
+  return !channel.GetInputStreamClass().empty();
 }
 
 bool StreamUtils::SupportsFFmpegReconnect(const StreamType& streamType, const iptvsimple::data::Channel& channel)

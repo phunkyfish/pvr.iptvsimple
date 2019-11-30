@@ -48,7 +48,8 @@ namespace iptvsimple
         m_tvgShift(c.GetTvgShift()), m_channelName(c.GetChannelName()), m_iconPath(c.GetIconPath()),
         m_streamURL(c.GetStreamURL()), m_hasCatchup(c.HasCatchup()), m_catchupMode(c.GetCatchupMode()),
         m_catchupDays(c.GetCatchupDays()), m_catchupSource(c.GetCatchupSource()),
-        m_tvgId(c.GetTvgId()), m_tvgName(c.GetTvgName()), m_properties(c.GetProperties()) {};
+        m_tvgId(c.GetTvgId()), m_tvgName(c.GetTvgName()), m_properties(c.GetProperties()),
+        m_inputStreamClass(c.GetInputStreamClass()) {};
       ~Channel() = default;
 
       bool IsRadio() const { return m_radio; }
@@ -99,6 +100,9 @@ namespace iptvsimple
       void AddProperty(const std::string& prop, const std::string& value) { m_properties.insert({prop, value}); }
       std::string GetProperty(const std::string& propName) const;
 
+      const std::string& GetInputStreamClass() const { return m_inputStreamClass; };
+      void SetInputStreamClass(const std::string& value) { m_inputStreamClass = value; }
+
       void UpdateTo(Channel& left) const;
       void UpdateTo(PVR_CHANNEL& left) const;
       void Reset();
@@ -123,6 +127,7 @@ namespace iptvsimple
       std::string m_tvgId = "";
       std::string m_tvgName = "";
       std::map<std::string, std::string> m_properties;
+      std::string m_inputStreamClass;
     };
   } //namespace data
 } //namespace iptvsimple

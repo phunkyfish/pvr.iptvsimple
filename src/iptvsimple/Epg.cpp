@@ -485,20 +485,24 @@ void Epg::MoveOldGenresXMLFileToNewLocation()
 
 EpgEntry* Epg::GetLiveEPGEntry(const Channel& myChannel) const
 {
+  return GetEPGEntry(myChannel, time(nullptr));
+}
+
+EpgEntry* Epg::GetEPGEntry(const Channel& myChannel, time_t lookupTime) const
+{
   ChannelEpg* channelEpg = FindEpgForChannel(myChannel);
   if (!channelEpg || channelEpg->GetEpgEntries().size() == 0)
     return nullptr;
 
   int shift = m_tsOverride ? m_epgTimeShift : myChannel.GetTvgShift() + m_epgTimeShift;
 
-  time_t dateTimeNow = time(0);
   for (auto& epgEntry : channelEpg->GetEpgEntries())
   {
     time_t startTime = epgEntry.GetStartTime() + shift;
     time_t endTime = epgEntry.GetEndTime() + shift;
-    if (startTime <= dateTimeNow && endTime > dateTimeNow)
+    if (startTime <= lookupTime && endTime > lookupTime)
       return &epgEntry;
-    else if (startTime > dateTimeNow)
+    else if (startTime > lookupTime)
       break;
   }
 

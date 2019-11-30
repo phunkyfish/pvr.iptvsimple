@@ -41,6 +41,9 @@ namespace iptvsimple
       OTHER_TYPE
     };
 
+    //static const std::string CATCHUP_INPUTSTREAMCLASS = "inputstream.ffmpegarchive";
+    static const std::string CATCHUP_INPUTSTREAMCLASS = PVR_STREAM_PROPERTY_VALUE_INPUTSTREAMFFMPEG;
+
     class StreamUtils
     {
     public:
@@ -54,6 +57,8 @@ namespace iptvsimple
       static std::string AddHeaderToStreamUrl(const std::string& streamUrl, const std::string& headerName, const std::string& headerValue);
       static bool UseKodiInputstreams(const StreamType& streamType);
       static bool ChannelSpecifiesInputstream(const iptvsimple::data::Channel& channe);
+
+      static std::string GetEffectiveInputStreamClass(const StreamType& streamType, const iptvsimple::data::Channel& channel);
 
     private:
       static bool SupportsFFmpegReconnect(const StreamType& streamType, const iptvsimple::data::Channel& channel);
