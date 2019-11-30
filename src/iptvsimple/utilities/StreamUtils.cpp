@@ -46,6 +46,47 @@ void StreamUtils::SetStreamProperty(PVR_NAMED_VALUE* properties, unsigned int* p
   }
 }
 
+void StreamUtils::SetAllStreamProperties(PVR_NAMED_VALUE* properties, unsigned int* propertiesCount, unsigned int propertiesMax, const iptvsimple::data::Channel& channel, const std::string& streamURL)
+{
+  if (StreamUtils::ChannelSpecifiesInputstream(channel))
+  {
+    // Channel has an inputstream class set so we only set the stream URL
+    StreamUtils::SetStreamProperty(properties, propertiesCount, propertiesMax, PVR_STREAM_PROPERTY_STREAMURL, streamURL);
+  }
+  else
+  {
+    StreamType streamType = StreamUtils::GetStreamType(streamURL, channel);
+    if (streamType == StreamType::OTHER_TYPE)
+      streamType = StreamUtils::InspectStreamType(streamURL);
+
+    // Using kodi's built in inputstreams
+    if (StreamUtils::UseKodiInputstreams(streamType))
+    {
+      std::string ffmpegStreamURL = StreamUtils::GetURLWithFFmpegReconnectOptions(streamURL, streamType, channel);
+
+      StreamUtils::SetStreamProperty(properties, propertiesCount, propertiesMax, PVR_STREAM_PROPERTY_STREAMURL, streamURL);
+
+      if (streamType == StreamType::HLS)
+      {
+        if (channel.IsCatchupSupported())
+          StreamUtils::SetStreamProperty(properties, propertiesCount, propertiesMax, PVR_STREAM_PROPERTY_INPUTSTREAMCLASS, "inputstream.ffmpegarchive");//m_catchupController->GetInputstreamClass(streamType));
+        else
+          StreamUtils::SetStreamProperty(properties, propertiesCount, propertiesMax, PVR_STREAM_PROPERTY_INPUTSTREAMCLASS, PVR_STREAM_PROPERTY_VALUE_INPUTSTREAMFFMPEG);
+      }
+    }
+    else // inputstream.adpative
+    {
+      StreamUtils::SetStreamProperty(properties, propertiesCount, propertiesMax, PVR_STREAM_PROPERTY_STREAMURL, streamURL);
+      StreamUtils::SetStreamProperty(properties, propertiesCount, propertiesMax, PVR_STREAM_PROPERTY_INPUTSTREAMCLASS, "inputstream.adaptive");
+      StreamUtils::SetStreamProperty(properties, propertiesCount, propertiesMax, "inputstream.adaptive.manifest_type", StreamUtils::GetManifestType(streamType));
+      if (streamType == StreamType::HLS || streamType == StreamType::DASH)
+        StreamUtils::SetStreamProperty(properties, propertiesCount, propertiesMax, PVR_STREAM_PROPERTY_MIMETYPE, StreamUtils::GetMimeType(streamType));
+      if (streamType == StreamType::DASH)
+        StreamUtils::SetStreamProperty(properties, propertiesCount, propertiesMax, "inputstream.adaptive.manifest_update_parameter", "full");
+    }
+  }
+}
+
 const StreamType StreamUtils::GetStreamType(const std::string& url, const Channel& channel)
 {
   if (url.find(".m3u8") != std::string::npos ||
