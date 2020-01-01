@@ -57,7 +57,7 @@ void CatchupController::ProcessChannelForPlayback(Channel& channel) //should be 
       m_catchupEndTime = liveEpgEntry->GetEndTime();
       Logger::Log(LEVEL_NOTICE, "HAVE live entry %lld", m_programmeStartTime);
     }
-    else if (m_controlsLiveStream)
+    else if (m_controlsLiveStream || !channel.IsCatchupSupported())
     {
       ClearProgramme();
       m_catchupStartTime = 0;
