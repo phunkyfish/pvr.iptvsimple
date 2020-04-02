@@ -1,3 +1,6 @@
+v4.12.0
+- Added: Stream Manager for caching stream types and speeding up channel switches
+
 v4.11.6
 - Fixed: Fix incorrect live URL selection and inputstream for standard (no timeshift) catchup streams
 - Fixed: Correctly cache mime_type for streams
