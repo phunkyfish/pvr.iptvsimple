@@ -62,6 +62,59 @@ std::string WebUtils::ReadFileContentsStartOnly(const std::string& url, int* htt
   return strContent;
 }
 
+std::string WebUtils::ReadFileContentsStartOnly(const std::string &url, std::string &effectiveURL, int *httpCode)
+{
+  std::string strContent;
+  void* fileHandle = XBMC->OpenFile(url.c_str(), 0x08); //READ_NO_CACHE
+  if (fileHandle)
+  {
+    char* newURL = XBMC->GetFilePropertyValue(fileHandle, XFILE::FILE_PROPERTY_EFFECTIVE_URL, "");
+    effectiveURL = newURL;
+    XBMC->FreeString(newURL);
+
+    // char* responseLine = XBMC->GetFilePropertyValue(fileHandle, XFILE::FILE_PROPERTY_RESPONSE_PROTOCOL, "");
+    // std::string statusLine = responseLine;
+    // XBMC->FreeString(responseLine);
+    // *httpCode = ParseHttpCode(statusLine);
+
+    char buffer[1024];
+    if (int bytesRead = XBMC->ReadFile(fileHandle, buffer, 1024))
+      strContent.append(buffer, bytesRead);
+    XBMC->CloseFile(fileHandle);
+  }
+
+  if (strContent.empty())
+    *httpCode = 500;
+  else
+    *httpCode = 200;
+
+  return strContent;
+}
+
+std::string WebUtils::GetEffectiveUrl(const std::string &url)
+{
+  std::string effectiveURL = url;
+  void* fileHandle = XBMC->OpenFile(url.c_str(), 0x08); //READ_NO_CACHE
+  if (fileHandle)
+  {
+    char* newURL = XBMC->GetFilePropertyValue(fileHandle, XFILE::FILE_PROPERTY_EFFECTIVE_URL, "");
+    effectiveURL = newURL;
+    XBMC->FreeString(newURL);
+
+    // char* responseLine = XBMC->GetFilePropertyValue(fileHandle, XFILE::FILE_PROPERTY_RESPONSE_PROTOCOL, "");
+    // std::string statusLine = responseLine;
+    // XBMC->FreeString(responseLine);
+    // *httpCode = ParseHttpCode(statusLine);
+
+    // char buffer[1024];
+    // if (int bytesRead = XBMC->ReadFile(fileHandle, buffer, 1024))
+    //   strContent.append(buffer, bytesRead);
+    XBMC->CloseFile(fileHandle);
+  }
+
+  return effectiveURL;
+}
+
 bool WebUtils::IsHttpUrl(const std::string& url)
 {
   return StringUtils::StartsWith(url, HTTP_PREFIX) || StringUtils::StartsWith(url, HTTPS_PREFIX);

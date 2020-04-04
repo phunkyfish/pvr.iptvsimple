@@ -46,12 +46,16 @@ void StreamUtils::SetAllStreamProperties(PVR_NAMED_VALUE* properties, unsigned i
     if (streamType == StreamType::OTHER_TYPE)
       streamType = StreamUtils::InspectStreamType(streamURL, channel);
 
+    std::string effectiveUrl = WebUtils::GetEffectiveUrl(streamURL);
+
+    Logger::Log(LogLevel::LEVEL_NOTICE, "%s XXX - \n%s\n%s", __FUNCTION__, streamURL.c_str(), effectiveUrl.c_str());
+
     // Using kodi's built in inputstreams
     if (StreamUtils::UseKodiInputstreams(streamType))
     {
-      std::string ffmpegStreamURL = StreamUtils::GetURLWithFFmpegReconnectOptions(streamURL, streamType, channel);
+      std::string ffmpegStreamURL = StreamUtils::GetURLWithFFmpegReconnectOptions(effectiveUrl, streamType, channel);
 
-      StreamUtils::SetStreamProperty(properties, propertiesCount, propertiesMax, PVR_STREAM_PROPERTY_STREAMURL, streamURL);
+      StreamUtils::SetStreamProperty(properties, propertiesCount, propertiesMax, PVR_STREAM_PROPERTY_STREAMURL, effectiveUrl);
 
       if (streamType == StreamType::HLS || streamType == StreamType::TS)
       {

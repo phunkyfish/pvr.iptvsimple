@@ -13,6 +13,7 @@
 #include "data/Channel.h"
 #include "data/EpgEntry.h"
 #include "utilities/StreamUtils.h"
+#include "StreamManager.h"
 
 #include <mutex>
 
@@ -71,5 +72,7 @@ namespace iptvsimple
     bool m_controlsLiveStream = false;
     iptvsimple::Epg& m_epg;
     std::mutex* m_mutex = nullptr;
+
+    StreamManager m_streamManager;
   };
 } //namespace iptvsimple
