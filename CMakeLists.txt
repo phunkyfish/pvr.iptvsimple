@@ -21,6 +21,7 @@ set(IPTV_SOURCES src/PVRIptvData.cpp
                  src/iptvsimple/CatchupController.cpp
                  src/iptvsimple/Channels.cpp
                  src/iptvsimple/ChannelGroups.cpp
+                 src/iptvsimple/Providers.cpp
                  src/iptvsimple/Epg.cpp
                  src/iptvsimple/PlaylistLoader.cpp
                  src/iptvsimple/Settings.cpp
@@ -28,6 +29,7 @@ set(IPTV_SOURCES src/PVRIptvData.cpp
                  src/iptvsimple/data/Channel.cpp
                  src/iptvsimple/data/ChannelEpg.cpp
                  src/iptvsimple/data/ChannelGroup.cpp
+                 src/iptvsimple/data/Provider.cpp
                  src/iptvsimple/data/EpgEntry.cpp
                  src/iptvsimple/data/EpgGenre.cpp
                  src/iptvsimple/utilities/FileUtils.cpp
@@ -39,6 +41,7 @@ set(IPTV_HEADERS src/PVRIptvData.h
                  src/iptvsimple/CatchupController.h
                  src/iptvsimple/Channels.h
                  src/iptvsimple/ChannelGroups.h
+                 src/iptvsimple/Providers.cpp
                  src/iptvsimple/Epg.h
                  src/iptvsimple/PlaylistLoader.h
                  src/iptvsimple/Settings.h
@@ -46,6 +49,7 @@ set(IPTV_HEADERS src/PVRIptvData.h
                  src/iptvsimple/data/Channel.h
                  src/iptvsimple/data/ChannelEpg.h
                  src/iptvsimple/data/ChannelGroup.h
+                 src/iptvsimple/data/Provider.cpp
                  src/iptvsimple/data/EpgEntry.h
                  src/iptvsimple/data/EpgGenre.h
                  src/iptvsimple/data/StreamEntry.h
