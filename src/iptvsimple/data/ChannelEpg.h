@@ -47,7 +47,6 @@ namespace iptvsimple
 
     private:
       std::string m_id;
-      //std::vector<std::string> m_names;
       std::vector<DisplayNamePair> m_displayNames;
       std::string m_iconPath;
       std::map<time_t, EpgEntry> m_epgEntries;

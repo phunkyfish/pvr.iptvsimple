@@ -11,6 +11,7 @@
 #include "Channels.h"
 #include "ChannelGroups.h"
 #include "Providers.h"
+#include "Media.h"
 
 #include <string>
 
@@ -41,6 +42,10 @@ namespace iptvsimple
   static const std::string PROVIDER_LOGO           = "provider-logo=";
   static const std::string PROVIDER_COUNTRY        = "provider-country=";
   static const std::string PROVIDER_LANGUAGE       = "provider-lang=";
+  static const std::string MEDIA                   = "media=";
+  static const std::string MEDIA_TYPE              = "media-type=";
+  static const std::string MEDIA_DIR               = "media-dir=";
+  static const std::string MEDIA_SIZE              = "media-size=";
   static const std::string KODIPROP_MARKER         = "#KODIPROP:";
   static const std::string EXTVLCOPT_MARKER        = "#EXTVLCOPT:";
   static const std::string EXTVLCOPT_DASH_MARKER   = "#EXTVLCOPT--";
@@ -50,7 +55,9 @@ namespace iptvsimple
   class PlaylistLoader
   {
   public:
-    PlaylistLoader(kodi::addon::CInstancePVRClient* client, iptvsimple::Channels& channels, iptvsimple::ChannelGroups& channelGroups, iptvsimple::Providers& providers);
+    PlaylistLoader(kodi::addon::CInstancePVRClient* client, iptvsimple::Channels& channels,
+                   iptvsimple::ChannelGroups& channelGroups, iptvsimple::Providers& providers,
+                   iptvsimple::Media& media);
 
     bool Init();
 
@@ -61,7 +68,7 @@ namespace iptvsimple
     static std::string ReadMarkerValue(const std::string& line, const std::string& markerName);
     static void ParseSinglePropertyIntoChannel(const std::string& line, iptvsimple::data::Channel& channel, const std::string& markerName);
 
-    std::string ParseIntoChannel(const std::string& line, iptvsimple::data::Channel& channel, std::vector<int>& groupIdList, int epgTimeShift, int catchupCorrectionSecs);
+    std::string ParseIntoChannel(const std::string& line, iptvsimple::data::Channel& channel, data::MediaEntry& mediaEntry, std::vector<int>& groupIdList, int epgTimeShift, int catchupCorrectionSecs);
     void ParseAndAddChannelGroups(const std::string& groupNamesListString, std::vector<int>& groupIdList, bool isRadio);
 
     std::string m_m3uLocation;
@@ -70,6 +77,7 @@ namespace iptvsimple
     iptvsimple::Providers& m_providers;
     iptvsimple::ChannelGroups& m_channelGroups;
     iptvsimple::Channels& m_channels;
+    iptvsimple::Media& m_media;
     kodi::addon::CInstancePVRClient* m_client;
   };
 } //namespace iptvsimple

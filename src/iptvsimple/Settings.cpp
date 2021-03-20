@@ -116,6 +116,15 @@ void Settings::ReadFromAddon(const std::string& userPath, const std::string& cli
   m_logoBaseUrl = kodi::GetSettingString("logoBaseUrl");
   m_epgLogosMode = kodi::GetSettingEnum<EpgLogosMode>("logoFromEpg", EpgLogosMode::IGNORE_XMLTV);
 
+  // Media
+  m_groupMediaByTitle = kodi::GetSettingBoolean("mediaGroupByTitle", true);
+  m_groupMediaBySeason = kodi::GetSettingBoolean("mediaGroupBySeason", true);
+  m_includeShowInfoInMediaTitle = kodi::GetSettingBoolean("mediaTitleSeasonEpisode", false);
+  m_groupMediaByType = kodi::GetSettingBoolean("mediaGroupByType", true);
+  m_groupMediaByClass = kodi::GetSettingBoolean("mediaGroupByClass", true);
+
+  m_ignoreVodTagForMedia = kodi::GetSettingBoolean("mediaIgnoreVodTag", false);
+
   // Timeshift
   m_timeshiftEnabled = kodi::GetSettingBoolean("timeshiftEnabled", false);
   m_timeshiftEnabledAll = kodi::GetSettingBoolean("timeshiftEnabledAll", false);
@@ -255,6 +264,19 @@ ADDON_STATUS Settings::SetValue(const std::string& settingName, const kodi::CSet
     return SetStringSetting<ADDON_STATUS>(settingName, settingValue, m_logoBaseUrl, ADDON_STATUS_OK, ADDON_STATUS_OK);
   else if (settingName == "logoFromEpg")
     return SetEnumSetting<EpgLogosMode, ADDON_STATUS>(settingName, settingValue, m_epgLogosMode, ADDON_STATUS_OK, ADDON_STATUS_OK);
+  // Media
+  else if (settingName == "mediaGroupByTitle")
+    return SetSetting<bool, ADDON_STATUS>(settingName, settingValue, m_groupMediaByTitle, ADDON_STATUS_OK, ADDON_STATUS_OK);
+  else if (settingName == "mediaGroupBySeason")
+    return SetSetting<bool, ADDON_STATUS>(settingName, settingValue, m_groupMediaBySeason, ADDON_STATUS_OK, ADDON_STATUS_OK);
+  else if (settingName == "mediaTitleSeasonEpisode")
+    return SetSetting<bool, ADDON_STATUS>(settingName, settingValue, m_includeShowInfoInMediaTitle, ADDON_STATUS_OK, ADDON_STATUS_OK);
+  else if (settingName == "mediaGroupByType")
+    return SetSetting<bool, ADDON_STATUS>(settingName, settingValue, m_groupMediaByType, ADDON_STATUS_OK, ADDON_STATUS_OK);
+  else if (settingName == "mediaGroupByClass")
+    return SetSetting<bool, ADDON_STATUS>(settingName, settingValue, m_groupMediaByClass, ADDON_STATUS_OK, ADDON_STATUS_OK);
+  else if (settingName == "mediaIgnoreVodTag")
+    return SetSetting<bool, ADDON_STATUS>(settingName, settingValue, m_ignoreVodTagForMedia, ADDON_STATUS_OK, ADDON_STATUS_OK);
   // Timeshift
   else if (settingName == "timeshiftEnabled")
     return SetSetting<bool, ADDON_STATUS>(settingName, settingValue, m_timeshiftEnabled, ADDON_STATUS_OK, ADDON_STATUS_OK);

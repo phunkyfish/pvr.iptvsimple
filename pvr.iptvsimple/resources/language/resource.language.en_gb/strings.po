@@ -556,7 +556,45 @@ msgctxt "#30127"
 msgid "Enable timeshift for UDP based streams"
 msgstr ""
 
-#empty strings from id 30128 to 30449
+#empty strings from id 30128 to 30149
+
+#. category-lavel: Media
+#. group-label: Media - Media
+msgctxt "#30150"
+msgid "Media"
+msgstr ""
+
+#. label: Media - mediaGroupByTitle
+msgctxt "#30151"
+msgid "Group entries by title"
+msgstr ""
+
+#. label: Media - mediaGroupBySeason
+msgctxt "#30152"
+msgid "Group entries by season"
+msgstr ""
+
+#. label: Media - mediaBySeasonEpisode
+msgctxt "#30153"
+msgid "Include season and epsiode number in title"
+msgstr ""
+
+#. label: Media - mediaIgnoreVodTag
+msgctxt "#30154"
+msgid "Ignore VOD property for media"
+msgstr ""
+
+#. label: Media - mediaGroupByType
+msgctxt "#30155"
+msgid "Group entries by media type"
+msgstr ""
+
+#. label: Media - mediaGroupByClass
+msgctxt "#30156"
+msgid "Group entries by media class"
+msgstr ""
+
+#empty strings from id 30157 to 30449
 
 #. label: TV
 msgctxt "#30450"
@@ -568,7 +606,47 @@ msgctxt "#30451"
 msgid "Radio"
 msgstr ""
 
-#empty strings from id 30452 to 30499
+#. label: Video
+msgctxt "#30452"
+msgid "Video"
+msgstr ""
+
+#. label: Audio
+msgctxt "#30453"
+msgid "Audio"
+msgstr ""
+
+#. label: Radio
+msgctxt "#30454"
+msgid "TV Shows"
+msgstr ""
+
+#. label: Radio
+msgctxt "#30455"
+msgid "Movies"
+msgstr ""
+
+#. label: Radio
+msgctxt "#30456"
+msgid "Music Videos"
+msgstr ""
+
+#. label: Radio
+msgctxt "#30457"
+msgid "Music"
+msgstr ""
+
+#. label: Radio
+msgctxt "#30458"
+msgid "Radio Shows"
+msgstr ""
+
+#. label: Radio
+msgctxt "#30459"
+msgid "Podcasts"
+msgstr ""
+
+#empty strings from id 30460 to 30499
 
 #. notification: Inputstreams
 msgctxt "#30500"
@@ -938,7 +1016,7 @@ msgctxt "#30726"
 msgid "Enable the timeshift feature for UDP based streams. Will only apply to streams that do not select a specific inputstream addon for playback. The inputstream.ffmpegdirect addon will be used for timeshift."
 msgstr ""
 
-#empty strings from id 30727 to 307039
+#empty strings from id 30727 to 30739
 
 #. help info - Other categories continued
 
@@ -960,4 +1038,43 @@ msgstr ""
 #. help: Groups - groups
 msgctxt "#30743"
 msgid "Settings on customising channel groups."
+msgstr ""
+
+#empty strings from id 30744 to 30799
+
+#. help info - Media
+
+#. help-category: Media
+msgctxt "#30800"
+msgid "Settings related to VOD media."
+msgstr ""
+
+#. help: Media - mediaGroupByTitle
+msgctxt "#30801"
+msgid "If multiple entries exist with matching titles create a virtual folder to group them together."
+msgstr ""
+
+#. help: Media - mediaGroupBySeason
+msgctxt "#30802"
+msgid "If multiple entries exist with matching titles create a second virtual folder to group them together by season also if possible."
+msgstr ""
+
+#. help: Media - mediaTitleSeasonEpisode
+msgctxt "#30803"
+msgid "Prepend the season and episode numbers to the title."
+msgstr ""
+
+#. help: Media - mediaIgnoreVodTag
+msgctxt "#30804"
+msgid "VOD is detected when a [B]#EXT-X-PLAYLIST-TYPE:[/B] property of [B]VOD[/B] is found in the M3U or [B]media[/B] attributes are found on the M3U entry. If enabled only media attributes on the M3U entry will categorise that entry as media, VOD properties will be ignored."
+msgstr ""
+
+#. help: Media - mediaGroupByType
+msgctxt "#30805"
+msgid "If known create root folders grouping the type of media. The types are TV Show, Movie, Music Video, Music, Radio Show and Podcast."
+msgstr ""
+
+#. help: Media - mediaGroupByClass
+msgctxt "#30806"
+msgid "If grouping the type of media and the type is unknown create root folders grouping the class of media. These classes are Video and Audio."
 msgstr ""

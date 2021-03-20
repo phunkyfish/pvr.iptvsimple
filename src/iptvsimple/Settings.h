@@ -136,6 +136,13 @@ namespace iptvsimple
     const std::string& GetLogoBaseUrl() const { return m_logoBaseUrl; }
     const EpgLogosMode& GetEpgLogosMode() const { return m_epgLogosMode; }
 
+    bool GroupMediaByTitle() const { return m_groupMediaByTitle; }
+    bool GroupMediaBySeason() const { return m_groupMediaBySeason; }
+    bool IncludeShowInfoInMediaTitle() const { return m_includeShowInfoInMediaTitle; }
+    bool GroupMediaByType() const { return m_groupMediaByType; }
+    bool GroupMediaByClass() const { return m_groupMediaByClass; }
+    bool IgnoreVodTagForMedia() const { return m_ignoreVodTagForMedia; }
+
     bool IsTimeshiftEnabled() const { return m_timeshiftEnabled; }
     bool IsTimeshiftEnabledAll() const { return m_timeshiftEnabledAll; }
     bool IsTimeshiftEnabledHttp() const { return m_timeshiftEnabledHttp; }
@@ -289,6 +296,14 @@ namespace iptvsimple
     std::string m_logoPath;
     std::string m_logoBaseUrl;
     EpgLogosMode m_epgLogosMode = EpgLogosMode::IGNORE_XMLTV;
+
+    // Media
+    bool m_groupMediaByTitle = true;
+    bool m_groupMediaBySeason = true;
+    bool m_includeShowInfoInMediaTitle = false;
+    bool m_groupMediaByType = true;
+    bool m_groupMediaByClass = true;
+    bool m_ignoreVodTagForMedia = false;
 
     // Timeshift
     bool m_timeshiftEnabled = false;
