@@ -28,8 +28,9 @@ using namespace iptvsimple;
 using namespace iptvsimple::data;
 using namespace iptvsimple::utilities;
 
-PlaylistLoader::PlaylistLoader(kodi::addon::CInstancePVRClient* client, Channels& channels, ChannelGroups& channelGroups, Providers& providers)
-  : m_channelGroups(channelGroups), m_channels(channels), m_providers(providers), m_client(client) { }
+PlaylistLoader::PlaylistLoader(kodi::addon::CInstancePVRClient* client, Channels& channels,
+                               ChannelGroups& channelGroups, Providers& providers, Media& media)
+  : m_channelGroups(channelGroups), m_channels(channels), m_providers(providers), m_media(media), m_client(client) { }
 
 bool PlaylistLoader::Init()
 {
@@ -64,6 +65,7 @@ bool PlaylistLoader::LoadPlayList()
   /* load channels */
   bool isFirstLine = true;
   bool isRealTime = true;
+  bool isMediaEntry = false;
   int epgTimeShift = 0;
   int catchupCorrectionSecs = Settings::GetInstance().GetCatchupCorrectionSecs();
   std::vector<int> currentChannelGroupIdList;
@@ -71,6 +73,7 @@ bool PlaylistLoader::LoadPlayList()
   bool xeevCatchup = false;
 
   Channel tmpChannel;
+  MediaEntry tmpMediaEntry;
 
   std::string line;
   while (std::getline(stream, line))
@@ -125,7 +128,11 @@ bool PlaylistLoader::LoadPlayList()
       tmpChannel.SetChannelNumber(m_channels.GetCurrentChannelNumber());
       currentChannelGroupIdList.clear();
 
-      const std::string groupNamesListString = ParseIntoChannel(line, tmpChannel, currentChannelGroupIdList, epgTimeShift, catchupCorrectionSecs, xeevCatchup);
+      isMediaEntry = line.find(MEDIA) != std::string::npos ||
+                     line.find(MEDIA_DIR) != std::string::npos ||
+                     line.find(MEDIA_SIZE) != std::string::npos;
+
+      const std::string groupNamesListString = ParseIntoChannel(line, tmpChannel, tmpMediaEntry, currentChannelGroupIdList, epgTimeShift, catchupCorrectionSecs, xeevCatchup);
 
       if (!groupNamesListString.empty())
       {
@@ -163,18 +170,32 @@ bool PlaylistLoader::LoadPlayList()
     {
       Logger::Log(LEVEL_DEBUG, "%s - Adding channel '%s' with URL: '%s'", __FUNCTION__, tmpChannel.GetChannelName().c_str(), line.c_str());
 
-      if (isRealTime)
+      if ((isRealTime || !Settings::GetInstance().IsMediaEnabled() || (!Settings::GetInstance().ShowVodAsRecordings()) && !isMediaEntry))
+      {
         tmpChannel.AddProperty(PVR_STREAM_PROPERTY_ISREALTIMESTREAM, "true");
 
-      Channel channel(tmpChannel);
-      channel.SetStreamURL(line);
-      channel.ConfigureCatchupMode();
+        Channel channel = tmpChannel;
+        channel.SetStreamURL(line);
+        channel.ConfigureCatchupMode();
 
-      if (!m_channels.AddChannel(channel, currentChannelGroupIdList, m_channelGroups, channelHadGroups))
-        Logger::Log(LEVEL_DEBUG, "%s - Not adding channel '%s' as only channels with groups are supported for %s channels per add-on settings", __func__, tmpChannel.GetChannelName().c_str(), channel.IsRadio() ? "radio" : "tv");
+        if (!m_channels.AddChannel(channel, currentChannelGroupIdList, m_channelGroups, channelHadGroups))
+          Logger::Log(LEVEL_DEBUG, "%s - Not adding channel '%s' as only channels with groups are supported for %s channels per add-on settings", __func__, tmpChannel.GetChannelName().c_str(), channel.IsRadio() ? "radio" : "tv");
+      }
+      else // We have media
+      {
+        MediaEntry entry = tmpMediaEntry;
+        entry.UpdateFrom(tmpChannel);
+        entry.SetStreamURL(line);
+
+        if (!m_media.AddMediaEntry(entry))
+          Logger::Log(LEVEL_DEBUG, "%s - Counld not add media entry as an entry with the same gnenerated unique ID already exists", __func__);
+
+      }
 
       tmpChannel.Reset();
+      tmpMediaEntry.Reset();
       isRealTime = true;
+      isMediaEntry = false;
       channelHadGroups = false;
     }
   }
@@ -186,19 +207,21 @@ bool PlaylistLoader::LoadPlayList()
 
   Logger::Log(LEVEL_INFO, "%s Playlist Loaded - %d (ms)", __FUNCTION__, milliseconds);
 
-  if (m_channels.GetChannelsAmount() == 0)
+  if (m_channels.GetChannelsAmount() == 0 && m_media.GetNumMedia() == 0)
   {
-    Logger::Log(LEVEL_ERROR, "%s - Unable to load channels from file '%s'", __FUNCTION__, m_m3uLocation.c_str());
+    Logger::Log(LEVEL_ERROR, "%s - Unable to load channels or media from file '%s'", __FUNCTION__, m_m3uLocation.c_str());
     return false;
   }
 
   Logger::Log(LEVEL_INFO, "%s - Loaded %d channels.", __FUNCTION__, m_channels.GetChannelsAmount());
   Logger::Log(LEVEL_INFO, "%s - Loaded %d channel groups.", __FUNCTION__, m_channelGroups.GetChannelGroupsAmount());
   Logger::Log(LEVEL_INFO, "%s - Loaded %d providers.", __FUNCTION__, m_providers.GetNumProviders());
+  Logger::Log(LEVEL_INFO, "%s - Loaded %d media items.", __FUNCTION__, m_media.GetNumMedia());
+
   return true;
 }
 
-std::string PlaylistLoader::ParseIntoChannel(const std::string& line, Channel& channel, std::vector<int>& groupIdList, int epgTimeShift, int catchupCorrectionSecs, bool xeevCatchup)
+std::string PlaylistLoader::ParseIntoChannel(const std::string& line, Channel& channel, MediaEntry& mediaEntry, std::vector<int>& groupIdList, int epgTimeShift, int catchupCorrectionSecs, bool xeevCatchup)
 {
   // parse line
   size_t colonIndex = line.find(':');
@@ -231,6 +254,10 @@ std::string PlaylistLoader::ParseIntoChannel(const std::string& line, Channel& c
     std::string strProviderIconPath = ReadMarkerValue(infoLine, PROVIDER_LOGO);
     std::string strProviderCountries = ReadMarkerValue(infoLine, PROVIDER_COUNTRIES);
     std::string strProviderLanguages = ReadMarkerValue(infoLine, PROVIDER_LANGUAGES);
+    std::string strMedia = ReadMarkerValue(infoLine, MEDIA);
+    std::string strMediaDir = ReadMarkerValue(infoLine, MEDIA_DIR);
+    std::string strMediaSize = ReadMarkerValue(infoLine, MEDIA_SIZE);
+
     kodi::UnknownToUTF8(strTvgName, strTvgName);
     kodi::UnknownToUTF8(strCatchupSource, strCatchupSource);
 
@@ -373,6 +400,12 @@ std::string PlaylistLoader::ParseIntoChannel(const std::string& line, Channel& c
       channel.SetProviderUniqueId(provider->GetUniqueId());
     }
 
+    if (!strMediaDir.empty())
+      mediaEntry.SetDirectory(strMediaDir);
+
+    if (!strMediaSize.empty())
+      mediaEntry.SetSizeInBytes(std::strtoll(strMediaSize.c_str(), nullptr, 10));
+
     return ReadMarkerValue(infoLine, GROUP_NAME_MARKER);
   }
 
@@ -440,12 +473,14 @@ void PlaylistLoader::ReloadPlayList()
   m_channels.Clear();
   m_channelGroups.Clear();
   m_providers.Clear();
+  m_media.Clear();
 
   if (LoadPlayList())
   {
     m_client->TriggerChannelUpdate();
     m_client->TriggerChannelGroupsUpdate();
     m_client->TriggerProvidersUpdate();
+    m_client->TriggerRecordingUpdate();
   }
 }
 
