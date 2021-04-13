@@ -16,9 +16,12 @@
 #include <ctime>
 #include <chrono>
 
+#include <kodi/tools/StringUtils.h>
+
 using namespace iptvsimple;
 using namespace iptvsimple::data;
 using namespace iptvsimple::utilities;
+using namespace kodi::tools;
 
 PVRIptvData::PVRIptvData()
 {
@@ -26,6 +29,7 @@ PVRIptvData::PVRIptvData()
   m_channelGroups.Clear();
   m_providers.Clear();
   m_epg.Clear();
+  m_media.Clear();
 }
 
 ADDON_STATUS PVRIptvData::Create()
@@ -90,6 +94,7 @@ PVR_ERROR PVRIptvData::GetCapabilities(kodi::addon::PVRCapabilities& capabilitie
   capabilities.SetSupportsRecordingsRename(false);
   capabilities.SetSupportsRecordingsLifetimeChange(false);
   capabilities.SetSupportsDescrambleInfo(false);
+  capabilities.SetSupportsRecordings(true);
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -140,7 +145,7 @@ void PVRIptvData::Process()
 
       Settings::GetInstance().ReloadAddonSettings();
       m_playlistLoader.ReloadPlayList();
-      m_epg.ReloadEPG();
+      m_epg.ReloadEPG(); // Reloading EPG also updates media
 
       m_reloadChannelsGroupsAndEPG = false;
       refreshTimer = 0;
@@ -363,6 +368,54 @@ PVR_ERROR PVRIptvData::SetEPGMaxFutureDays(int epgMaxFutureDays)
 {
   m_epg.SetEPGMaxFutureDays(epgMaxFutureDays);
   return PVR_ERROR_NO_ERROR;
+}
+
+/***************************************************************************
+ * Media
+ **************************************************************************/
+
+PVR_ERROR PVRIptvData::GetRecordingsAmount(bool deleted, int& amount)
+{
+  std::lock_guard<std::mutex> lock(m_mutex);
+  if (deleted)
+    amount = 0;
+  else
+    amount = m_media.GetNumMedia();
+
+  return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR PVRIptvData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultSet& results)
+{
+  if (!deleted)
+  {
+    std::vector<kodi::addon::PVRRecording> media;
+    {
+      std::lock_guard<std::mutex> lock(m_mutex);
+      m_media.GetMedia(media);
+    }
+
+    for (const auto& mediaTag : media)
+      results.Add(mediaTag);
+
+    Logger::Log(LEVEL_DEBUG, "%s - media available '%d'", __func__, media.size());
+  }
+
+  return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR PVRIptvData::GetRecordingStreamProperties(const kodi::addon::PVRRecording& recording, std::vector<kodi::addon::PVRStreamProperty>& properties)
+{
+  std::string url = m_media.GetMediaEntryURL(recording);
+
+  if (!url.empty())
+  {
+    properties.emplace_back(PVR_STREAM_PROPERTY_STREAMURL, url);
+
+    return PVR_ERROR_NO_ERROR;
+  }
+
+  return PVR_ERROR_SERVER_ERROR;
 }
 
 /***************************************************************************
