@@ -1,3 +1,7 @@
+v8.0.0
+- Fixed: Change reported backend name
+- Added: Support pvr providers in Kodi 20
+
 v7.6.1
 - Fixed: Allow ignoring M3U logos when using local logo path
 
