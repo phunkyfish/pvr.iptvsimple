@@ -173,13 +173,19 @@ Settings related to Channel Logos.
     - `Prefer XMLTV` - Use the channel logo from the XMLTV file if available otherwise use the M3U logo.
 
 ### Media
-Media can be used to access a provider VOD library representing the hierarchy in a folder structure as PVR recordings. An M3U entry can denote that it's media by either having an M3U property of `EXT-X-PLAYLIST-TYPE` set to VOD or for the specific entry to have `media`, `media-dir` and `media-size` attributes. More detail on these can be found in [Supported M3U and XMLTV elements](#supported-m3u-and-xmltv-elements).
+Media entries can be used to access the Video-On-Demand (VOD) library provided by IPTV services. The IPTV media library can be organized either as plain list of channels or the hierarchy tree made of folders and PVR recordings.
 
-* **Show media as recordings**: When enabled media can be shown as PVR recordings. If disabled all media will be shown as channels similar to regular PVR channels.
-* **Group entries by title**: If multiple entries exist with matching titles create a virtual folder to group them together.
-* **Group entries by season**: If multiple entries exist with matching titles create a second virtual folder to group them together by season also if possible.
+An M3U entry can denote that it's media by having:
+* an M3U property of `EXT-X-PLAYLIST-TYPE` set to `VOD`,
+* the M3U attributes of `media`, `media-dir` or `media-size` are set
+
+More detail on these can be found in [Supported M3U and XMLTV elements](#supported-m3u-and-xmltv-elements).
+
+* **Show media as recordings**: If enabled, all IPTV media entries (including VOD) appear in Kodi PVR GUI as PVR recordings. Otherwise, they appear as regular PVR channels.
+* **Show VODs as recordings**: If enabled, IPTV VOD entries appear in Kodi PVR GUI as PVR recordings. Otherwise, they appear as regular PVR channels.
+* **Group entries by title**: If multiple entries exist with matching titles, create a virtual folder to group them together.
+* **Group entries by season**: If multiple entries exist with matching titles, try additionally grouping them in sub-folders representing seasons.
 * **Include season and episode number in title**: Prepend the season and episode numbers to the title.
-* **Show VODs as recordings**: Instead of showing VOD Media as channels, show them as recordings instead. Can be helpful in cleaning up the channels view for IPTV providers. Note that if disabled entries with media attributes will still be shown as recordings, only `EXT-X-PLAYLIST-TYPE` of VOD won't be shown.
 
 ### Timeshift
 Timeshift settings for pausing/rewinding and fast-forwarding live streams.
